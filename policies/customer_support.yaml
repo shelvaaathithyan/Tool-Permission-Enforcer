@@ -1,0 +1,8 @@
+agent_id: customer_support_agent
+tool_name: crm
+
+allowed_operations:
+  - read
+
+data_scope:
+  customer_id: session.customer_id
