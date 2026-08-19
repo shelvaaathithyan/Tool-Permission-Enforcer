@@ -117,6 +117,10 @@ def test_audit_logs_api_admin(client, admin_token):
     resp = client.get("/api/v1/audit/logs", headers={"Authorization": f"Bearer {admin_token}"})
     assert resp.status_code == 200
     assert isinstance(resp.json(), list)
+    # verify PENDING is not returned
+    for log in resp.json():
+        assert log["decision"] != "PENDING"
+        assert "agent_name" in log
 
 def test_audit_alerts_api_admin(client, admin_token):
     resp = client.get("/api/v1/audit/alerts", headers={"Authorization": f"Bearer {admin_token}"})

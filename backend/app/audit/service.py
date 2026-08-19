@@ -90,7 +90,11 @@ def check_violation_threshold(
 
 def get_audit_logs(db: Session, limit: int = 100, offset: int = 0):
     return db.scalars(
-        select(AuditLog).order_by(AuditLog.created_at.desc()).limit(limit).offset(offset)
+        select(AuditLog)
+        .where(AuditLog.decision != AuditDecision.PENDING)
+        .order_by(AuditLog.created_at.desc())
+        .limit(limit)
+        .offset(offset)
     ).all()
 
 def get_security_alerts(db: Session, limit: int = 100, offset: int = 0):

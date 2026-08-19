@@ -2,7 +2,7 @@ import uuid
 from enum import Enum
 from datetime import datetime
 from sqlalchemy import String, Boolean, DateTime, ForeignKey, Enum as SQLEnum, JSON, Integer
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.sql import func
 from app.database.base import Base
@@ -38,6 +38,14 @@ class AuditLog(Base):
     reason: Mapped[str] = mapped_column(String, nullable=True)
     
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    
+    agent = relationship("Agent", primaryjoin="AuditLog.agent_id == Agent.id", foreign_keys=[agent_id])
+    
+    @property
+    def agent_name(self) -> str:
+        if self.agent:
+            return self.agent.name
+        return "Unknown Agent"
 
 
 class AlertSeverity(str, Enum):

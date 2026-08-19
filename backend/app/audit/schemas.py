@@ -13,7 +13,7 @@ class AuditLogResponse(BaseModel):
     operation: str
     resource: str
     tool_name: Optional[str] = None
-    customer_id: Optional[str] = None
+    agent_name: Optional[str] = None
     original_prompt: Optional[str] = None
     arguments: Optional[Dict[str, Any]] = None
     status: Optional[str] = None

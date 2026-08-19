@@ -54,7 +54,7 @@ const AuditLogs = () => {
                   <th>Session</th>
                   <th>Operation</th>
                   <th>Tool</th>
-                  <th>Customer</th>
+                  <th>Agent</th>
                   <th>Decision</th>
                   <th>Reason</th>
                 </tr>
@@ -69,11 +69,13 @@ const AuditLogs = () => {
                       <td>{log.session_id || '—'}</td>
                       <td>{log.operation}</td>
                       <td>{log.tool_name || '—'}</td>
-                      <td>{log.customer_id || '—'}</td>
+                      <td>
+                        <div style={{fontWeight: '500'}}>{log.agent_name || 'Unknown Agent'}</div>
+                        {log.agent_id && <div style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>{log.agent_id}</div>}
+                      </td>
                       <td>
                         {log.decision === 'ALLOWED' && <span className="badge success">ALLOWED</span>}
                         {log.decision === 'BLOCKED' && <span className="badge danger">BLOCKED</span>}
-                        {log.decision === 'PENDING' && <span className="badge secondary">PENDING</span>}
                       </td>
                       <td>{log.reason || '—'}</td>
                     </tr>
