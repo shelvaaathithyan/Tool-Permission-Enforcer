@@ -47,7 +47,7 @@ def create_customer(customer_in: schemas.CustomerCreate, db: Session = Depends(g
         logger.error(f"Error creating customer: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal Server Error")
 
-@router.patch("/{customer_id}", response_model=schemas.CustomerResponse)
+@router.put("/{customer_id}", response_model=schemas.CustomerResponse)
 def update_customer(customer_id: str, customer_in: schemas.CustomerUpdate, db: Session = Depends(get_db)):
     try:
         return service.update_customer(db, customer_id, customer_in)

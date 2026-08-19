@@ -100,7 +100,21 @@ const AdminDashboard = () => {
                 <h3>Recent AI Activity</h3>
               </div>
               <div style={{padding: '30px', textAlign: 'center', color: 'var(--text-muted)'}}>
-                <p>Detailed AI activity feed will appear here when the audit engine is enabled.</p>
+                <span style={{fontSize: '2rem'}}>📋</span>
+                <p>Detailed AI activity feed will appear here when the Permission Proxy audit engine is fully connected.</p>
+              </div>
+            </div>
+            
+            <div className="panel" style={{flex: '1 1 300px'}}>
+              <div className="panel-header">
+                <h3>Security Overview</h3>
+              </div>
+              <div style={{padding: '30px', textAlign: 'center', color: 'var(--text-muted)'}}>
+                <span style={{fontSize: '2rem'}}>🛡️</span>
+                <p>Security alerts and blocked operation metrics will be displayed here in the next phase.</p>
+                <button className="btn btn-outline btn-sm" style={{marginTop: '10px'}} onClick={() => navigate('/security-alerts')}>
+                  View Alerts
+                </button>
               </div>
             </div>
           </div>

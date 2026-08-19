@@ -29,6 +29,8 @@ services:
         condition: service_healthy
     volumes:
       - ./backend:/app
+    env_file:
+      - .env
 
   frontend:
     build:

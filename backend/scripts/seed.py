@@ -23,26 +23,6 @@ logger = logging.getLogger(__name__)
 
 DEMO_CUSTOMERS = [
     {
-        "customer_id": "CUST-001",
-        "first_name": "Shelvaaathithyan",
-        "last_name": "VK",
-        "email": "shelvaaathithyan.vk@example.com",
-        "phone": "+91-9000000001",
-        "company": "ABC Technologies",
-        "designation": "Software Engineer",
-        "date_of_birth": "1995-05-15",
-    },
-    {
-        "customer_id": "CUST-002",
-        "first_name": "Swathi",
-        "last_name": "Laxmi",
-        "email": "swathi.laxmi@example.com",
-        "phone": "+91-9000000002",
-        "company": "XYZ Solutions",
-        "designation": "Engineering Manager",
-        "date_of_birth": "1994-08-20",
-    },
-    {
         "customer_id": "CUST-003",
         "first_name": "Karthikeyan",
         "last_name": "VV",
@@ -52,7 +32,6 @@ DEMO_CUSTOMERS = [
         "designation": "Product Manager",
         "date_of_birth": "1993-11-10",
     },
-
     {
         "customer_id": "CUST-005",
         "first_name": "Mohana Kumar",
@@ -155,10 +134,24 @@ DEMO_CUSTOMERS = [
     }
 ]
 
+def clean_incorrect_customers(db):
+    incorrect_emails = ["shelvaaathithyan.vk@example.com", "swathi.laxmi@example.com", "sumathi.p@example.com"]
+    incorrect_ids = ["CUST-001", "CUST-002", "CUST-004"] # Example if CUST-004 was Sumathi
+    
+    customers_to_delete = db.query(Customer).filter(
+        (Customer.email.in_(incorrect_emails)) | (Customer.customer_id.in_(incorrect_ids))
+    ).all()
+    
+    for cust in customers_to_delete:
+        logger.info(f"Removing incorrect CRM customer: {cust.email} ({cust.customer_id})")
+        db.delete(cust)
+    db.commit()
+
 def seed_customers(db_session=None):
     db = db_session or SessionLocal()
     try:
         logger.info("Starting seed process for mock CRM customers...")
+        clean_incorrect_customers(db)
         for cust_data in DEMO_CUSTOMERS:
             # We copy it because we don't want to mutate the global dict if seed is called multiple times in tests
             cust_data_copy = cust_data.copy()

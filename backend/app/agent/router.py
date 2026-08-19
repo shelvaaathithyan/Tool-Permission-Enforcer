@@ -28,7 +28,7 @@ def invoke_agent_tool(
     ).first()
     
     if not active_session:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No active session found")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No active session found")
         
     try:
         response = agent_service.invoke(

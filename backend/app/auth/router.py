@@ -1,15 +1,17 @@
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session as DBSession
 from fastapi.security import OAuth2PasswordRequestForm
 from app.database.session import get_db
 from app.auth import schemas, service, models
 from app.core import security
 from app.api import deps
+from app.agent.models import Session as AgentSession, SessionStatus
 
 router = APIRouter()
 
 @router.post("/signup", response_model=schemas.SignupRequestResponse, status_code=status.HTTP_201_CREATED)
-def signup(request_in: schemas.SignupRequestCreate, db: Session = Depends(get_db)):
+def signup(request_in: schemas.SignupRequestCreate, db: DBSession = Depends(get_db)):
     if request_in.requested_role == models.Role.ADMIN:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Cannot signup as ADMIN")
         
@@ -21,7 +23,7 @@ def signup(request_in: schemas.SignupRequestCreate, db: Session = Depends(get_db
 
 
 @router.post("/login", response_model=schemas.Token)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: DBSession = Depends(get_db)):
     user = service.get_user_by_email(db, email=form_data.username)
     if not user:
         # Check if there is a pending or rejected signup request
@@ -48,6 +50,25 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Your account has been disabled.")
         
+    if not user.agent:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="User has no associated Agent.")
+
+    # Deactivate existing active sessions
+    db.query(AgentSession).filter(
+        AgentSession.user_id == user.id,
+        AgentSession.status == SessionStatus.ACTIVE
+    ).update({"status": SessionStatus.INACTIVE})
+    
+    # Create new active session
+    new_session = AgentSession(
+        session_id=f"SESSION-{uuid.uuid4().hex[:8].upper()}",
+        user_id=user.id,
+        agent_id=user.agent.id,
+        status=SessionStatus.ACTIVE
+    )
+    db.add(new_session)
+    db.commit()
+
     access_token = security.create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -56,5 +77,29 @@ def get_me(current_user: models.User = Depends(deps.get_current_user)):
     return current_user
 
 @router.post("/logout")
-def logout():
+def logout(db: DBSession = Depends(get_db), current_user: models.User = Depends(deps.get_current_user)):
+    # Deactivate active session
+    db.query(AgentSession).filter(
+        AgentSession.user_id == current_user.id,
+        AgentSession.status == SessionStatus.ACTIVE
+    ).update({"status": SessionStatus.INACTIVE})
+    db.commit()
     return {"message": "Successfully logged out"}
+
+@router.get("/session")
+def get_session(db: DBSession = Depends(get_db), current_user: models.User = Depends(deps.get_current_user)):
+    active_session = db.query(AgentSession).filter(
+        AgentSession.user_id == current_user.id,
+        AgentSession.agent_id == current_user.agent.id,
+        AgentSession.status == SessionStatus.ACTIVE
+    ).first()
+    
+    if not active_session:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No active session found")
+        
+    return {
+        "session_id": active_session.session_id,
+        "user_id": str(active_session.user_id),
+        "agent_id": str(active_session.agent_id),
+        "status": active_session.status.value
+    }

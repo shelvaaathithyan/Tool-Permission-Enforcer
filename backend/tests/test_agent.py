@@ -10,17 +10,6 @@ import uuid
 def agent_user_token(client, db_session):
     user = create_user_and_agent(db_session, "Agent User", "agentuser@test.com", get_password_hash("testpassword"), Role.MANAGER)
     
-    # Create active session
-    sess_id = f"sess-{uuid.uuid4().hex[:8]}"
-    active_session = AgentSession(
-        session_id=sess_id,
-        user_id=user.id,
-        agent_id=user.agent.id,
-        status=SessionStatus.ACTIVE
-    )
-    db_session.add(active_session)
-    db_session.commit()
-
     login_resp = client.post("/api/v1/auth/login", data={
         "username": "agentuser@test.com",
         "password": "testpassword"
@@ -86,11 +75,14 @@ def test_agent_invocation_no_active_session(client, db_session):
     login_resp = client.post("/api/v1/auth/login", data={"username": "nosession@test.com", "password": "testpassword"})
     token = login_resp.json()["access_token"]
     
+    # Logout to deactivate session
+    client.post("/api/v1/auth/logout", headers={"Authorization": f"Bearer {token}"})
+    
     response = client.post(
         "/api/v1/agent/invoke",
         json={"prompt": "Do something"},
         headers={"Authorization": f"Bearer {token}"}
     )
     
-    assert response.status_code == 400
+    assert response.status_code == 401
     assert "no active session" in response.json()["detail"].lower()

@@ -8,7 +8,7 @@ from app.database.base import Base
 
 class SessionStatus(str, Enum):
     ACTIVE = "ACTIVE"
-    ENDED = "ENDED"
+    INACTIVE = "INACTIVE"
 
 class Agent(Base):
     __tablename__ = "agents"

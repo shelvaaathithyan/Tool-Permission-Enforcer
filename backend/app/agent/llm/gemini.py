@@ -3,46 +3,82 @@ from app.core.config import settings
 from app.agent.llm.base import LLMProvider
 from typing import List, Dict, Any, Tuple, Optional
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 class GeminiProvider(LLMProvider):
     def __init__(self):
-        # We assume settings.gemini_api_key might be None in testing, 
-        # but in production it must be set.
         if settings.gemini_api_key:
             genai.configure(api_key=settings.gemini_api_key)
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+            
+        sys_prompt = "You are a CRM assistant. If a user asks to get, update, or delete a customer by name, infer that name as the customer_id and directly call the corresponding tool (get_customer, update_customer, or delete_customer) without searching first."
+        self.model = genai.GenerativeModel('gemini-3.6-flash', system_instruction=sys_prompt)
+
+    def _format_tools_for_gemini(self, tools: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        import copy
+        formatted_tools = copy.deepcopy(tools)
+        
+        def _uppercase_types(node):
+            if isinstance(node, dict):
+                # Gemini schema does not support 'default'
+                if "default" in node:
+                    node.pop("default")
+                if "type" in node and isinstance(node["type"], str):
+                    node["type"] = node["type"].upper()
+                for value in node.values():
+                    _uppercase_types(value)
+            elif isinstance(node, list):
+                for item in node:
+                    _uppercase_types(item)
+                    
+        _uppercase_types(formatted_tools)
+        return formatted_tools
 
     def generate_response(self, prompt: str, tools: List[Dict[str, Any]]) -> Tuple[str, Optional[Dict[str, Any]]]:
         if not settings.gemini_api_key:
-            # Fallback or mock behavior for tests if API key isn't provided
             raise ValueError("GEMINI_API_KEY is not configured")
             
         try:
-            # Note: The google-generativeai SDK requires tools to be formatted as google.ai.generativelanguage.Tool
-            # Alternatively, we can pass them directly if the dictionary format matches OpenAPI schemas expected by genai.
-            # In google-generativeai==0.8.3, `tools` can be passed as a list of dicts.
+            gemini_tools = self._format_tools_for_gemini(tools)
             response = self.model.generate_content(
                 prompt,
-                tools=tools
+                tools=gemini_tools
             )
             
-            # Check for function call
-            if response.candidates and response.candidates[0].content.parts:
-                for part in response.candidates[0].content.parts:
-                    if part.function_call:
-                        fc = part.function_call
-                        # Extract arguments safely
-                        args = {}
-                        for key, value in fc.args.items():
-                            args[key] = value
-                        
-                        return "", {
-                            "name": fc.name,
-                            "arguments": args
-                        }
+            # Check for candidates safely
+            if not getattr(response, "candidates", None):
+                logger.warning("Gemini response missing candidates")
+                return "", None
+                
+            candidate = response.candidates[0]
+            if not getattr(candidate, "content", None) or not getattr(candidate.content, "parts", None):
+                logger.warning("Gemini candidate missing content or parts")
+                return "", None
+                
+            for part in candidate.content.parts:
+                if getattr(part, "function_call", None):
+                    fc = part.function_call
+                    name = getattr(fc, "name", "")
+                    fc_args = getattr(fc, "args", {})
+                    
+                    def _unwrap(obj):
+                        if hasattr(obj, "items"):
+                            return {k: _unwrap(v) for k, v in obj.items()}
+                        elif hasattr(obj, "__iter__") and not isinstance(obj, (str, bytes, dict)):
+                            return [_unwrap(v) for v in obj]
+                        else:
+                            return obj
+                            
+                    args = _unwrap(fc_args)
+
+                    return "", {
+                        "name": name,
+                        "arguments": args if isinstance(args, dict) else {}
+                    }
             
-            # No tool call, just text
-            return response.text, None
+            return getattr(response, "text", ""), None
             
         except Exception as e:
-            raise RuntimeError(f"LLM API failure: {str(e)}")
+            logger.exception("Gemini API LLMProvider encountered an error during generation")
+            raise RuntimeError("LLM API failure") from e

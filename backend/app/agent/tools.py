@@ -23,7 +23,7 @@ agent_tools = [
             "properties": {
                 "customer_id": {
                     "type": "string",
-                    "description": "The unique ID of the customer, e.g. CUST-001."
+                    "description": "The unique ID of the customer, or their name if ID is not known."
                 }
             },
             "required": ["customer_id"]
@@ -72,7 +72,7 @@ agent_tools = [
             "properties": {
                 "customer_id": {
                     "type": "string",
-                    "description": "The unique ID of the customer to update."
+                    "description": "The unique ID of the customer to update, or their name if ID is not known."
                 },
                 "fields": {
                     "type": "object",
@@ -98,7 +98,7 @@ agent_tools = [
             "properties": {
                 "customer_id": {
                     "type": "string",
-                    "description": "The unique ID of the customer to delete."
+                    "description": "The unique ID of the customer to delete, or their name if ID is not known."
                 }
             },
             "required": ["customer_id"]

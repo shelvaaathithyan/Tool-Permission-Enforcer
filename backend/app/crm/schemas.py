@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from typing import Optional, List
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 import uuid
 
 class CustomerBase(BaseModel):
@@ -23,10 +23,12 @@ class CustomerUpdate(BaseModel):
     company: Optional[str] = None
     designation: Optional[str] = None
     date_of_birth: Optional[date] = None
+    session_status: Optional[str] = Field(None, pattern="^(ACTIVE|INACTIVE)$")
 
 class CustomerResponse(CustomerBase):
     id: uuid.UUID
     customer_id: str
+    session_status: str
     created_at: datetime
     updated_at: datetime
 
