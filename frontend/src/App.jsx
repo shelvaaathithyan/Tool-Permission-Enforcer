@@ -1,38 +1,38 @@
-import { useState, useEffect } from 'react'
-import './App.css'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import UserDashboard from './pages/UserDashboard';
+import AdminDashboard from './pages/AdminDashboard';
+import './App.css';
 
 function App() {
-  const [health, setHealth] = useState('Checking...')
-
-  useEffect(() => {
-    const fetchHealth = async () => {
-      try {
-        const url = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-        const response = await fetch(`${url}/health`);
-        if (response.ok) {
-          const data = await response.json();
-          setHealth(`Healthy (${data.status})`);
-        } else {
-          setHealth('Unavailable (Error Status)');
-        }
-      } catch (error) {
-        setHealth('Unavailable (Network Error)');
-      }
-    };
-
-    fetchHealth();
-  }, []);
-
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>Tool Permission Enforcer</h1>
-        <div className="status">
-          <p>Backend Status: {health}</p>
-        </div>
-      </header>
-    </div>
-  )
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          
+          <Route element={<ProtectedRoute allowedRoles={['MANAGER', 'STAFF']} />}>
+            <Route path="/dashboard" element={<UserDashboard />} />
+            {/* Future routes: /customers, /ai-assistant, etc. */}
+          </Route>
+
+          <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+            <Route path="/admin" element={<AdminDashboard />} />
+            {/* Future routes: /users, /agents, /audit-logs, etc. */}
+          </Route>
+
+          {/* Catch all redirect */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
+  );
 }
 
-export default App
+export default App;
+
