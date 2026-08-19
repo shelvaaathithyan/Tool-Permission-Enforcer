@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from app.auth.service import create_user_and_agent
 from app.auth.models import Role
 from app.core.security import get_password_hash
@@ -17,11 +17,29 @@ def agent_user_token(client, db_session):
     return login_resp.json()["access_token"]
 
 def test_agent_invocation_success(client, agent_user_token):
-    with patch("app.agent.router.llm_provider.generate_response") as mock_gen:
+    with patch("app.agent.router.llm_provider.generate_response") as mock_gen, \
+         patch("app.permission_proxy.service.crm_service.get_customer_by_customer_id") as mock_crm:
         mock_gen.return_value = ("I understood this as a READ request.", {
             "name": "get_customer",
             "arguments": {"customer_id": "CUST-001"}
         })
+        
+        import uuid
+        from datetime import date, datetime, timezone
+        mock_customer = MagicMock()
+        mock_customer.id = uuid.uuid4()
+        mock_customer.customer_id = "CUST-001"
+        mock_customer.first_name = "Test"
+        mock_customer.last_name = "User"
+        mock_customer.email = "test@example.com"
+        mock_customer.phone = "12345"
+        mock_customer.company = "Acme"
+        mock_customer.designation = "Dev"
+        mock_customer.date_of_birth = date(1990, 1, 1)
+        mock_customer.session_status = "ACTIVE"
+        mock_customer.created_at = datetime.now(timezone.utc)
+        mock_customer.updated_at = datetime.now(timezone.utc)
+        mock_crm.return_value = mock_customer
         
         response = client.post(
             "/api/v1/agent/invoke",
@@ -31,7 +49,8 @@ def test_agent_invocation_success(client, agent_user_token):
         
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "PENDING_PERMISSION_PROXY"
+        assert data["status"] == "ALLOWED"
+        assert data["decision"] == "ALLOWED"
         assert data["tool_request"]["tool_name"] == "get_customer"
         assert data["tool_request"]["operation"] == "READ"
         assert data["tool_request"]["resource"] == "CUSTOMER"
@@ -51,7 +70,8 @@ def test_agent_invocation_update(client, agent_user_token):
         
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "PENDING_PERMISSION_PROXY"
+        assert data["status"] == "BLOCKED"
+        assert data["decision"] == "BLOCKED"
         assert data["tool_request"]["operation"] == "UPDATE"
 
 def test_agent_invocation_unknown_tool(client, agent_user_token):

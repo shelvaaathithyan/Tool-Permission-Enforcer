@@ -7,7 +7,7 @@ const Customers = () => {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const pageSize = 10;
+  const pageSize = 100;
   
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -154,22 +154,8 @@ const Customers = () => {
             
             <div style={{display: 'flex', justifyContent: 'space-between', marginTop: '20px', alignItems: 'center'}}>
               <span style={{fontSize: '0.85rem', color: 'var(--text-muted)'}}>
-                Showing {customers.length} of {total} customers
+                Showing {customers.length} customers
               </span>
-              <div>
-                <button 
-                  className="btn btn-outline btn-sm" 
-                  disabled={page === 1} 
-                  onClick={() => setPage(page - 1)}>
-                  Previous
-                </button>
-                <button 
-                  className="btn btn-outline btn-sm" 
-                  disabled={page * pageSize >= total} 
-                  onClick={() => setPage(page + 1)}>
-                  Next
-                </button>
-              </div>
             </div>
           </>
         )}

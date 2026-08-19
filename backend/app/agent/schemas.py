@@ -16,3 +16,6 @@ class AgentInvokeResponse(BaseModel):
     status: str
     response: str
     tool_request: Optional[AgentToolRequest] = None
+    decision: Optional[str] = None
+    reason: Optional[str] = None
+    result: Optional[Dict[str, Any]] = None

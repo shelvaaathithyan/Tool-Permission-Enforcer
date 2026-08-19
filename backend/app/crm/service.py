@@ -29,6 +29,15 @@ def get_customers(db: Session, page: int = 1, page_size: int = 20) -> Tuple[List
     customers = db.scalars(query.offset(offset).limit(page_size)).all()
     return list(customers), total or 0
 
+def search_customers(db: Session, search_query: str) -> List[Customer]:
+    query = select(Customer).where(
+        (Customer.first_name.ilike(f"%{search_query}%")) |
+        (Customer.last_name.ilike(f"%{search_query}%")) |
+        (Customer.email.ilike(f"%{search_query}%"))
+    ).limit(50)
+    customers = db.scalars(query).all()
+    return list(customers)
+
 def create_customer(db: Session, customer_in: CustomerCreate) -> Customer:
     customer_id = _generate_customer_id()
     db_customer = Customer(

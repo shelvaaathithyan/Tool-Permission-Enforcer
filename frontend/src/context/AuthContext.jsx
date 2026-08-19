@@ -91,6 +91,9 @@ export const AuthProvider = ({ children }) => {
         console.error("Logout API error:", e);
       }
     }
+    if (user?.id) {
+      sessionStorage.removeItem(`crm_agent_chat_${user.id}`);
+    }
     setUser(null);
     setToken(null);
     localStorage.removeItem('token');

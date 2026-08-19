@@ -12,6 +12,32 @@ const AiAssistant = () => {
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [sessionLoading, setSessionLoading] = useState(true);
 
+  // Load chat history from sessionStorage
+  useEffect(() => {
+    if (user?.id) {
+      const saved = sessionStorage.getItem(`crm_agent_chat_${user.id}`);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          const restored = parsed.map(msg => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          }));
+          setMessages(restored);
+        } catch (e) {
+          console.error("Failed to parse chat history");
+        }
+      }
+    }
+  }, [user?.id]);
+
+  // Save chat history to sessionStorage
+  useEffect(() => {
+    if (user?.id && messages.length > 0) {
+      sessionStorage.setItem(`crm_agent_chat_${user.id}`, JSON.stringify(messages));
+    }
+  }, [messages, user?.id]);
+
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -72,6 +98,7 @@ const AiAssistant = () => {
           text: data.response || "I processed your request.",
           toolRequest: data.tool_request,
           status: data.status,
+          reason: data.reason,
           timestamp: new Date()
         };
         setMessages(prev => [...prev, agentMessage]);
@@ -190,7 +217,7 @@ const AiAssistant = () => {
                     </div>
                     {msg.status === 'BLOCKED' && (
                       <div style={{padding: '10px 15px', backgroundColor: '#f8d7da', color: '#721c24', borderTop: '1px solid #f5c6cb', fontSize: '0.9rem'}}>
-                        <strong>Reason:</strong> Agent {msg.toolRequest.operation} operations are not permitted.
+                        <strong>Reason:</strong> {msg.reason || `Agent ${msg.toolRequest.operation} operations are not permitted.`}
                       </div>
                     )}
                   </div>

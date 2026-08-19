@@ -131,6 +131,171 @@ DEMO_CUSTOMERS = [
         "company": "Zeta Ventures",
         "designation": "UX Designer",
         "date_of_birth": "1993-08-28",
+    },
+    {
+        "customer_id": "CUST-015",
+        "first_name": "Arjun",
+        "last_name": "R",
+        "email": "arjun.r@example.com",
+        "phone": "+91-9000000015",
+        "company": "Nova Technologies",
+        "designation": "Senior Software Engineer",
+        "date_of_birth": "1990-05-15",
+        "session_status": "ACTIVE"
+    },
+    {
+        "customer_id": "CUST-016",
+        "first_name": "Divya",
+        "last_name": "M",
+        "email": "divya.m@example.com",
+        "phone": "+91-9000000016",
+        "company": "Bright Systems",
+        "designation": "Product Designer",
+        "date_of_birth": "1992-07-22",
+        "session_status": "ACTIVE"
+    },
+    {
+        "customer_id": "CUST-017",
+        "first_name": "Rahul",
+        "last_name": "K",
+        "email": "rahul.k@example.com",
+        "phone": "+91-9000000017",
+        "company": "Vertex Labs",
+        "designation": "Engineering Manager",
+        "date_of_birth": "1988-03-10",
+        "session_status": "ACTIVE"
+    },
+    {
+        "customer_id": "CUST-018",
+        "first_name": "Meena",
+        "last_name": "S",
+        "email": "meena.s@example.com",
+        "phone": "+91-9000000018",
+        "company": "Orion Solutions",
+        "designation": "Business Analyst",
+        "date_of_birth": "1994-01-25",
+        "session_status": "ACTIVE"
+    },
+    {
+        "customer_id": "CUST-019",
+        "first_name": "Vikram",
+        "last_name": "P",
+        "email": "vikram.p@example.com",
+        "phone": "+91-9000000019",
+        "company": "NextGen Networks",
+        "designation": "DevOps Engineer",
+        "date_of_birth": "1991-09-12",
+        "session_status": "INACTIVE"
+    },
+    {
+        "customer_id": "CUST-020",
+        "first_name": "Ananya",
+        "last_name": "R",
+        "email": "ananya.r@example.com",
+        "phone": "+91-9000000020",
+        "company": "BluePeak Technologies",
+        "designation": "UX Researcher",
+        "date_of_birth": "1995-11-03",
+        "session_status": "ACTIVE"
+    },
+    {
+        "customer_id": "CUST-021",
+        "first_name": "Suresh",
+        "last_name": "V",
+        "email": "suresh.v@example.com",
+        "phone": "+91-9000000021",
+        "company": "DataSphere Inc.",
+        "designation": "Data Engineer",
+        "date_of_birth": "1989-12-18",
+        "session_status": "ACTIVE"
+    },
+    {
+        "customer_id": "CUST-022",
+        "first_name": "Priya",
+        "last_name": "K",
+        "email": "priya.k@example.com",
+        "phone": "+91-9000000022",
+        "company": "CloudNova",
+        "designation": "HR Specialist",
+        "date_of_birth": "1993-02-14",
+        "session_status": "ACTIVE"
+    },
+    {
+        "customer_id": "CUST-023",
+        "first_name": "Akash",
+        "last_name": "T",
+        "email": "akash.t@example.com",
+        "phone": "+91-9000000023",
+        "company": "Alpha Digital",
+        "designation": "Security Engineer",
+        "date_of_birth": "1996-08-30",
+        "session_status": "ACTIVE"
+    },
+    {
+        "customer_id": "CUST-024",
+        "first_name": "Kavya",
+        "last_name": "N",
+        "email": "kavya.n@example.com",
+        "phone": "+91-9000000024",
+        "company": "GreenTech Solutions",
+        "designation": "Marketing Manager",
+        "date_of_birth": "1990-06-05",
+        "session_status": "INACTIVE"
+    },
+    {
+        "customer_id": "CUST-025",
+        "first_name": "Manoj",
+        "last_name": "G",
+        "email": "manoj.g@example.com",
+        "phone": "+91-9000000025",
+        "company": "Apex Consulting",
+        "designation": "Solutions Architect",
+        "date_of_birth": "1987-10-21",
+        "session_status": "ACTIVE"
+    },
+    {
+        "customer_id": "CUST-026",
+        "first_name": "Harini",
+        "last_name": "P",
+        "email": "harini.p@example.com",
+        "phone": "+91-9000000026",
+        "company": "FinEdge Systems",
+        "designation": "Finance Analyst",
+        "date_of_birth": "1994-04-09",
+        "session_status": "ACTIVE"
+    },
+    {
+        "customer_id": "CUST-027",
+        "first_name": "Dinesh",
+        "last_name": "S",
+        "email": "dinesh.s@example.com",
+        "phone": "+91-9000000027",
+        "company": "TechBridge",
+        "designation": "QA Lead",
+        "date_of_birth": "1992-01-11",
+        "session_status": "ACTIVE"
+    },
+    {
+        "customer_id": "CUST-028",
+        "first_name": "Keerthana",
+        "last_name": "V",
+        "email": "keerthana.v@example.com",
+        "phone": "+91-9000000028",
+        "company": "InnovateWorks",
+        "designation": "Project Manager",
+        "date_of_birth": "1995-07-07",
+        "session_status": "ACTIVE"
+    },
+    {
+        "customer_id": "CUST-029",
+        "first_name": "Naveen",
+        "last_name": "J",
+        "email": "naveen.j@example.com",
+        "phone": "+91-9000000029",
+        "company": "CoreStack Technologies",
+        "designation": "Cloud Architect",
+        "date_of_birth": "1989-11-28",
+        "session_status": "ACTIVE"
     }
 ]
 

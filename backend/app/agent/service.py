@@ -56,24 +56,22 @@ class AgentService:
 
         customer_id = arguments.get("customer_id")
 
-        # Create Audit Log
-        log_audit_event(
-            db=db,
-            user_id=user.id,
-            agent_id=agent.id,
-            session_id=active_session.session_id,
-            actor_type=ActorType.AGENT,
-            operation=tool_req.operation,
-            resource=tool_req.resource,
-            tool_name=tool_req.tool_name,
-            customer_id=customer_id,
-            original_prompt=prompt,
-            arguments=arguments,
-            decision=AuditDecision.PENDING
+        from app.permission_proxy.service import get_permission_proxy
+        proxy = get_permission_proxy(db)
+        evaluation = proxy.evaluate(tool_req, user, agent, active_session)
+
+        status_value = "ALLOWED" if evaluation["decision"] == "ALLOWED" else "BLOCKED"
+        response_msg = (
+            f"I understood this as a {tool_req.operation} request. Result: ALLOWED." 
+            if status_value == "ALLOWED" 
+            else "Security policy blocked this Agent operation."
         )
 
         return AgentInvokeResponse(
-            status="PENDING_PERMISSION_PROXY",
-            response=f"I understood this as a {tool_req.operation} request.",
+            status=status_value,
+            decision=evaluation["decision"],
+            reason=evaluation.get("reason"),
+            result=evaluation.get("result"),
+            response=response_msg,
             tool_request=tool_req
         )

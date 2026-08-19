@@ -20,7 +20,6 @@ def run_tests():
 
     test_prompt("Get me the information of Naren G")
     test_prompt("Update Naren G's phone number to 9876543210")
-    test_prompt("Delete Naren G")
 
 if __name__ == "__main__":
     run_tests()

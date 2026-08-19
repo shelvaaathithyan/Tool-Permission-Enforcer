@@ -87,3 +87,13 @@ def check_violation_threshold(
             )
             db.add(alert)
             db.commit()
+
+def get_audit_logs(db: Session, limit: int = 100, offset: int = 0):
+    return db.scalars(
+        select(AuditLog).order_by(AuditLog.created_at.desc()).limit(limit).offset(offset)
+    ).all()
+
+def get_security_alerts(db: Session, limit: int = 100, offset: int = 0):
+    return db.scalars(
+        select(SecurityAlert).order_by(SecurityAlert.created_at.desc()).limit(limit).offset(offset)
+    ).all()
