@@ -12,7 +12,21 @@ class GeminiProvider(LLMProvider):
         if settings.gemini_api_key:
             genai.configure(api_key=settings.gemini_api_key)
             
-        sys_prompt = "You are a CRM assistant. If a user asks to get, update, or delete a customer by name, infer that name as the customer_id and directly call the corresponding tool (get_customer, update_customer, or delete_customer) without searching first."
+        sys_prompt = (
+            "You are a CRM assistant. Follow these exact tool mapping rules:\n"
+            "- Customer names should use get_customer.\n"
+            "- Customer IDs should use get_customer.\n"
+            "- Company-based queries should use search_customers (e.g., query='company: Pioneer Apps' or just 'Pioneer Apps').\n"
+            "- Designation-based queries should use search_customers.\n"
+            "- Status-based queries should use search_customers.\n"
+            "Treat the following natural-language phrases as search intent (search_customers):\n"
+            "- 'who works at...'\n"
+            "- 'who is from...'\n"
+            "- 'which customer...'\n"
+            "- 'find customers...'\n"
+            "- 'customers working at...'\n"
+            "Do NOT use get_customer for company names or 'the requested customer'."
+        )
         self.model = genai.GenerativeModel('gemini-3.6-flash', system_instruction=sys_prompt)
 
     def _format_tools_for_gemini(self, tools: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

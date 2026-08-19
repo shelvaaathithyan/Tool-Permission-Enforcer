@@ -3,16 +3,23 @@
 agent_tools = [
     {
         "name": "search_customers",
-        "description": "Search for customers by name, email, or other text.",
+        "description": "Search for customers by name, email, company, or designation.",
         "parameters": {
             "type": "object",
             "properties": {
                 "query": {
                     "type": "string",
-                    "description": "The search term."
+                    "description": "General search term (optional if other filters are used)."
+                },
+                "company": {
+                    "type": "string",
+                    "description": "Filter by company name."
+                },
+                "designation": {
+                    "type": "string",
+                    "description": "Filter by job title or designation."
                 }
-            },
-            "required": ["query"]
+            }
         }
     },
     {

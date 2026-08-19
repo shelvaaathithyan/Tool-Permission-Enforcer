@@ -222,7 +222,7 @@ def test_proxy_mutations_blocked(db_session, mock_user, mock_agent, active_sessi
             
             result = proxy.evaluate(req, mock_user, mock_agent, active_session)
             assert result["decision"] == "BLOCKED"
-            assert "mutation operations are not permitted" in result["reason"]
+            assert f"Agent {op} operations are not permitted" in result["reason"]
             mock_crm.assert_not_called()
 
 def test_proxy_invalid_tool_blocked(db_session, mock_user, mock_agent, active_session):
@@ -299,3 +299,141 @@ def test_proxy_4_strike_rule(db_session, mock_user, mock_agent, active_session):
     ).all()
     assert len(alerts) == 1
     assert alerts[0].severity.name == "HIGH"
+
+def test_proxy_customer_id_normalization(db_session, mock_user, mock_agent, active_session):
+    proxy = get_permission_proxy(db_session)
+    req = AgentToolRequest(
+        tool_name="get_customer",
+        operation="READ",
+        resource="CUSTOMER",
+        arguments={"customer_id": " cust-123 "},
+        original_prompt="Get"
+    )
+    
+    with patch("app.permission_proxy.service.crm_service.get_customer_by_customer_id") as mock_crm, \
+         patch("app.crm.schemas.CustomerResponse.model_validate") as mock_validate:
+        mock_customer = MagicMock()
+        mock_customer.session_status = "ACTIVE"
+        mock_customer.customer_id = "CUST-123"
+        mock_crm.return_value = mock_customer
+        mock_validate.return_value.model_dump.return_value = {"customer_id": "CUST-123"}
+        
+        result = proxy.evaluate(req, mock_user, mock_agent, active_session)
+        assert result["decision"] == "ALLOWED"
+        assert req.arguments["customer_id"] == "CUST-123"
+        mock_crm.assert_called_with(db_session, "CUST-123")
+
+def test_proxy_customer_name_normalization(db_session, mock_user, mock_agent, active_session):
+    proxy = get_permission_proxy(db_session)
+    req = AgentToolRequest(
+        tool_name="get_customer",
+        operation="READ",
+        resource="CUSTOMER",
+        arguments={"customer_id": "  NAREN   G  "},
+        original_prompt="Get"
+    )
+    
+    with patch("app.permission_proxy.service.crm_service.get_customers") as mock_get_all, \
+         patch("app.crm.schemas.CustomerResponse.model_validate") as mock_validate:
+        mock_customer = MagicMock()
+        mock_customer.first_name = "Naren"
+        mock_customer.last_name = "G"
+        mock_customer.session_status = "ACTIVE"
+        mock_customer.customer_id = "CUST-009"
+        
+        mock_get_all.return_value = ([mock_customer], 1)
+        mock_validate.return_value.model_dump.return_value = {"customer_id": "CUST-009"}
+        
+        result = proxy.evaluate(req, mock_user, mock_agent, active_session)
+        assert result["decision"] == "ALLOWED"
+        assert req.arguments["customer_id"] == "CUST-009"
+
+def test_proxy_duplicate_customers_blocked(db_session, mock_user, mock_agent, active_session):
+    proxy = get_permission_proxy(db_session)
+    req = AgentToolRequest(
+        tool_name="get_customer",
+        operation="READ",
+        resource="CUSTOMER",
+        arguments={"customer_id": "Naren G"},
+        original_prompt="Get"
+    )
+    
+    with patch("app.permission_proxy.service.crm_service.get_customers") as mock_get_all:
+        mock_customer1 = MagicMock()
+        mock_customer1.first_name = "Naren"
+        mock_customer1.last_name = "G"
+        
+        mock_customer2 = MagicMock()
+        mock_customer2.first_name = "Naren"
+        mock_customer2.last_name = "g"
+        
+        mock_get_all.return_value = ([mock_customer1, mock_customer2], 2)
+        
+        result = proxy.evaluate(req, mock_user, mock_agent, active_session)
+        assert result["decision"] == "BLOCKED"
+        assert "Multiple customers matched" in result["reason"]
+
+def test_proxy_mutation_normalized_name(db_session, mock_user, mock_agent, active_session):
+    proxy = get_permission_proxy(db_session)
+    req = AgentToolRequest(
+        tool_name="update_customer",
+        operation="UPDATE",
+        resource="CUSTOMER",
+        arguments={"customer_id": " naren g\t", "fields": {}},
+        original_prompt="Update"
+    )
+    
+    with patch("app.permission_proxy.service.crm_service.get_customers") as mock_get_all:
+        mock_customer = MagicMock()
+        mock_customer.first_name = "Naren"
+        mock_customer.last_name = "G"
+        mock_customer.session_status = "ACTIVE"
+        mock_customer.customer_id = "CUST-009"
+        
+        mock_get_all.return_value = ([mock_customer], 1)
+        
+        result = proxy.evaluate(req, mock_user, mock_agent, active_session)
+        assert result["decision"] == "BLOCKED"
+        assert "Agent UPDATE operations are not permitted" in result["reason"]
+        assert req.arguments["customer_id"] == " naren g\t"
+
+def test_agent_update_does_not_require_customer_resolution(db_session, mock_user, mock_agent, active_session):
+    proxy = get_permission_proxy(db_session)
+    req = AgentToolRequest(
+        tool_name="update_customer",
+        operation="UPDATE",
+        resource="CUSTOMER",
+        arguments={"customer_id": "priyasharma", "fields": {"name": "priya s"}},
+        original_prompt="update priyasharma name to priya s"
+    )
+    
+    with patch("app.permission_proxy.service.crm_service.get_customers") as mock_get_all:
+        # It shouldn't even call get_customers
+        result = proxy.evaluate(req, mock_user, mock_agent, active_session)
+        assert result["decision"] == "BLOCKED"
+        assert "Agent UPDATE operations are not permitted" in result["reason"]
+        mock_get_all.assert_not_called()
+
+def test_proxy_inactive_customer_normalized_name(db_session, mock_user, mock_agent, active_session):
+    proxy = get_permission_proxy(db_session)
+    req = AgentToolRequest(
+        tool_name="get_customer",
+        operation="READ",
+        resource="CUSTOMER",
+        arguments={"customer_id": "  MOHANA    KUMAR   P "},
+        original_prompt="Get"
+    )
+    
+    with patch("app.permission_proxy.service.crm_service.get_customers") as mock_get_all:
+        mock_customer = MagicMock()
+        mock_customer.first_name = "Mohana Kumar"
+        mock_customer.last_name = "P"
+        mock_customer.session_status = "INACTIVE"
+        mock_customer.customer_id = "CUST-005"
+        
+        mock_get_all.return_value = ([mock_customer], 1)
+        
+        result = proxy.evaluate(req, mock_user, mock_agent, active_session)
+        assert result["decision"] == "BLOCKED"
+        assert "INACTIVE" in result["reason"]
+        assert req.arguments["customer_id"] == "CUST-005"

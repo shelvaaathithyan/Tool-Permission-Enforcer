@@ -44,6 +44,25 @@ class AgentService:
         if not registry.validate_tool_call(tool_name):
             raise ValueError(f"LLM selected unknown tool: {tool_name}")
 
+        validation_errors = registry.validate_tool_arguments(tool_name, arguments)
+        if validation_errors:
+            error_reason = f"Malformed tool arguments: {', '.join(validation_errors)}"
+            logger.warning(f"Agent validation error: {error_reason}")
+            return AgentInvokeResponse(
+                status="ERROR",
+                decision="ERROR",
+                reason=error_reason,
+                response="I encountered an error understanding the parameters for this request.",
+                tool_request=AgentToolRequest(
+                    tool_name=tool_name,
+                    operation=registry.get_tool_metadata(tool_name)["operation"],
+                    resource=registry.get_tool_metadata(tool_name)["resource"],
+                    arguments=arguments,
+                    original_prompt=prompt
+                ),
+                result={"error": error_reason}
+            )
+
         metadata = registry.get_tool_metadata(tool_name)
         
         tool_req = AgentToolRequest(
