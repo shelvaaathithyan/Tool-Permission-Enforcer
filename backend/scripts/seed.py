@@ -52,16 +52,7 @@ DEMO_CUSTOMERS = [
         "designation": "Product Manager",
         "date_of_birth": "1993-11-10",
     },
-    {
-        "customer_id": "CUST-004",
-        "first_name": "Sumathi",
-        "last_name": "P",
-        "email": "sumathi.p@example.com",
-        "phone": "+91-9000000004",
-        "company": "Tech Innovators",
-        "designation": "Senior Developer",
-        "date_of_birth": "1990-02-25",
-    },
+
     {
         "customer_id": "CUST-005",
         "first_name": "Mohana Kumar",
@@ -195,17 +186,6 @@ def seed_customers(db_session=None):
 DEMO_USERS = [
     {"name": "Sumathi P", "email": "sumathi.p@example.com", "role": Role.MANAGER},
     {"name": "Swathi Laxmi", "email": "swathi.laxmi@example.com", "role": Role.STAFF},
-    {"name": "Karthikeyan VV", "email": "karthikeyan.vv@example.com", "role": Role.STAFF},
-    {"name": "Mohana Kumar P", "email": "mohana.kumar@example.com", "role": Role.STAFF},
-    {"name": "Sanjay J", "email": "sanjay.j@example.com", "role": Role.STAFF},
-    {"name": "Pranika S", "email": "pranika.s@example.com", "role": Role.STAFF},
-    {"name": "Adhish Krishnaa", "email": "adhish.krishnaa@example.com", "role": Role.STAFF},
-    {"name": "Naren G", "email": "naren.g@example.com", "role": Role.STAFF},
-    {"name": "Kavin G", "email": "kavin.g@example.com", "role": Role.STAFF},
-    {"name": "Pratip TJ", "email": "pratip.tj@example.com", "role": Role.STAFF},
-    {"name": "Saumiyaa Sri", "email": "saumiyaa.sri@example.com", "role": Role.STAFF},
-    {"name": "Theerdhana AK", "email": "theerdhana.ak@example.com", "role": Role.STAFF},
-    {"name": "Soya S", "email": "soya.s@example.com", "role": Role.STAFF},
 ]
 
 def seed_users(db_session=None):
@@ -253,6 +233,16 @@ def seed_users(db_session=None):
                 db.add(db_agent)
                 db.commit()
                 logger.info(f"Created agent for {email}.")
+                
+        # Safely disable legacy staff portal users
+        valid_emails = [u["email"] for u in users_to_seed]
+        legacy_users = db.query(User).filter(User.email.notin_(valid_emails)).all()
+        for l_user in legacy_users:
+            if l_user.is_active:
+                l_user.is_active = False
+                logger.info(f"Disabled legacy portal user: {l_user.email}")
+        db.commit()
+
         
         logger.info("User seed process completed successfully.")
     except Exception as e:

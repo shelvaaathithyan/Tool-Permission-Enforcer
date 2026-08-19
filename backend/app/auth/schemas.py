@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional
 import uuid
-from app.auth.models import Role
+from app.auth.models import Role, SignupStatus
 from datetime import datetime
 
 class UserBase(BaseModel):
@@ -36,3 +36,26 @@ class UserResponse(UserBase):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+class SignupRequestCreate(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    requested_role: Role
+
+class SignupRequestResponse(BaseModel):
+    id: uuid.UUID
+    name: str
+    email: EmailStr
+    requested_role: Role
+    status: SignupStatus
+    created_at: datetime
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class ApprovalRequest(BaseModel):
+    role: Role
+
+class RejectionRequest(BaseModel):
+    reason: Optional[str] = None
+

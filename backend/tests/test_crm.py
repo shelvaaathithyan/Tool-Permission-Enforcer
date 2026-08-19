@@ -102,8 +102,12 @@ def test_seeded_customers(db_session, client):
     assert response.status_code == 200
     data = response.json()
     
-    # Verify 14 customers exist
-    assert data["total"] >= 14
+    # Verify 13 customers exist
+    assert data["total"] >= 13
     customer_ids = [c["customer_id"] for c in data["items"]]
     for i in range(1, 15):
+        # Note: Sumathi (CUST-004) was removed from DEMO_CUSTOMERS in seed.py 
+        # so CUST-004 won't exist. Wait, if she was removed, then the IDs are 1 to 14, skipping 4!
+        if i == 4:
+            continue
         assert f"CUST-{i:03d}" in customer_ids

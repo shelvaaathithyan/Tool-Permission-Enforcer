@@ -4,6 +4,7 @@ from app.core.config import settings
 from app.crm.router import router as crm_router
 from app.auth.router import router as auth_router
 from app.agent.router import router as agent_router
+from app.admin.router import router as admin_router
 
 app = FastAPI(
     title="Tool Permission Enforcer",
@@ -20,9 +21,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth_router, prefix="/api/v1/auth", tags=["Auth"])
-app.include_router(agent_router, prefix="/api/v1/agent", tags=["Agent"])
-app.include_router(crm_router, prefix="/api/v1/crm/customers", tags=["CRM"])
+app.include_router(crm_router, prefix="/api/v1/crm/customers", tags=["crm"])
+app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(agent_router, prefix="/api/v1/agent", tags=["agent"])
+app.include_router(admin_router, prefix="/api/v1/admin", tags=["admin"])
 
 @app.get("/health")
 def health_check():

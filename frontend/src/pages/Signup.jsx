@@ -10,6 +10,7 @@ const Signup = () => {
   const [role, setRole] = useState('STAFF');
   
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { signup, isAuthenticated, user, isLoading } = useContext(AuthContext);
@@ -43,7 +44,7 @@ const Signup = () => {
     const result = await signup(name, email, password, role);
     
     if (result.success) {
-      navigate('/login');
+      setSuccessMsg("Registration submitted successfully. Your account is pending administrator approval.");
     } else {
       setError(result.error);
     }
@@ -51,6 +52,18 @@ const Signup = () => {
   };
 
   if (isLoading) return <div>Loading...</div>;
+
+  if (successMsg) {
+    return (
+      <div className="auth-container">
+        <h2>Sign Up</h2>
+        <div className="success-message" style={{ color: 'green', padding: '10px', background: '#e6ffe6', border: '1px solid green', borderRadius: '4px', marginBottom: '15px' }}>
+          {successMsg}
+        </div>
+        <p><Link to="/login">Go to Login</Link></p>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-container">

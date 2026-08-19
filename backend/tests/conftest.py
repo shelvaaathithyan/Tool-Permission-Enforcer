@@ -52,6 +52,28 @@ def engine():
     finally:
         default_engine.dispose()
 
+from app.auth.service import create_user_and_agent
+from app.auth.models import Role
+from app.core.security import get_password_hash
+
+@pytest.fixture(scope="function")
+def token(client, db_session):
+    user = create_user_and_agent(db_session, "Test Staff", "staff.conftest@example.com", get_password_hash("testpass"), Role.STAFF)
+    response = client.post("/api/v1/auth/login", data={
+        "username": "staff.conftest@example.com",
+        "password": "testpass"
+    })
+    return response.json()["access_token"]
+
+@pytest.fixture(scope="function")
+def admin_token(client, db_session):
+    user = create_user_and_agent(db_session, "Test Admin", "admin.conftest@example.com", get_password_hash("testpass"), Role.ADMIN)
+    response = client.post("/api/v1/auth/login", data={
+        "username": "admin.conftest@example.com",
+        "password": "testpass"
+    })
+    return response.json()["access_token"]
+
 @pytest.fixture(scope="function")
 def db_session(engine):
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
