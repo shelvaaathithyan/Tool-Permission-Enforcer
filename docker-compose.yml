@@ -23,7 +23,6 @@ services:
     environment:
       - APP_ENV=development
       - LOG_LEVEL=INFO
-      - DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-ai_governance}
     depends_on:
       postgres:
         condition: service_healthy
@@ -38,7 +37,7 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - VITE_API_URL=http://localhost:8000
+      - VITE_API_URL=http://13.206.189.254:8000
     depends_on:
       - backend
     volumes:
