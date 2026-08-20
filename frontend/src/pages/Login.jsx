@@ -14,11 +14,7 @@ const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      if (user.role === 'ADMIN') {
-        navigate('/admin');
-      } else {
-        navigate('/dashboard');
-      }
+      navigate('/dashboard');
     }
   }, [isAuthenticated, user, navigate]);
 
@@ -34,45 +30,78 @@ const Login = () => {
     setIsSubmitting(false);
   };
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) {
+    return (
+      <div className="auth-page">
+        <div className="loader-container">
+          <div className="spinner"></div>
+          <p className="loader-message">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="auth-container">
-      <h2>Login to Tool Permission Enforcer</h2>
-      {error && <div className="error-message">{error}</div>}
-      <form onSubmit={handleSubmit} className="auth-form">
-        <div className="form-group">
-          <label>Email</label>
-          <input 
-            type="email" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
-            required 
-          />
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="auth-brand">
+          <div className="auth-brand-title">CRM Portal</div>
+          <div className="auth-brand-subtitle">AI-Powered CRM</div>
         </div>
-        <div className="form-group">
-          <label>Password</label>
-          <div className="password-input">
-            <input 
-              type={showPassword ? "text" : "password"} 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              required 
+
+        <h1 className="auth-heading">Welcome back</h1>
+        <p className="auth-subheading">Sign in to continue to your CRM workspace.</p>
+
+        {error && <div className="auth-error">{error}</div>}
+
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label htmlFor="login-email">Email</label>
+            <input
+              id="login-email"
+              type="email"
+              className="form-control"
+              placeholder="you@company.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
             />
-            <button 
-              type="button" 
-              onClick={() => setShowPassword(!showPassword)}
-              className="toggle-password"
-            >
-              {showPassword ? "Hide" : "Show"}
-            </button>
           </div>
+
+          <div className="form-group">
+            <label htmlFor="login-password">Password</label>
+            <div className="password-wrapper">
+              <input
+                id="login-password"
+                type={showPassword ? 'text' : 'password'}
+                className="form-control"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" className="auth-btn" disabled={isSubmitting}>
+            {isSubmitting ? 'Signing in...' : 'Sign in'}
+          </button>
+        </form>
+
+        <div className="auth-footer">
+          Don't have an account? <Link to="/signup">Sign up</Link>
         </div>
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Logging in...' : 'Login'}
-        </button>
-      </form>
-      <p>Don't have an account? <Link to="/signup">Sign up here</Link></p>
+      </div>
     </div>
   );
 };

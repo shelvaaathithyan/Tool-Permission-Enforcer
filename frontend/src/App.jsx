@@ -14,7 +14,7 @@ import Users from './pages/Users';
 import Agents from './pages/Agents';
 import AuditLogs from './pages/AuditLogs';
 import SecurityAlerts from './pages/SecurityAlerts';
-import Reports from './pages/Reports';
+
 import Settings from './pages/Settings';
 import './index.css';
 
@@ -41,7 +41,7 @@ function App() {
               <Route path="/dashboard" element={<DashboardRouter />} />
               <Route path="/customers" element={<Customers />} />
               <Route path="/ai-assistant" element={<AiAssistant />} />
-              <Route path="/reports" element={<Reports />} />
+
               <Route path="/settings" element={<Settings />} />
             </Route>
 

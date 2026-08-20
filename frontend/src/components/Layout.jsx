@@ -18,6 +18,9 @@ const Layout = () => {
         <main className="content-area">
           <Outlet />
         </main>
+        <footer className="app-footer">
+          © Shelvaaathithyan VK
+        </footer>
       </div>
       
       {/* Overlay for mobile sidebar */}
@@ -30,6 +33,7 @@ const Layout = () => {
             zIndex: 999
           }}
           onClick={() => setSidebarOpen(false)}
+          aria-label="Close navigation"
         />
       )}
     </div>

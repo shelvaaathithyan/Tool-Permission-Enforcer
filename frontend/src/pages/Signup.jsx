@@ -18,11 +18,7 @@ const Signup = () => {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      if (user.role === 'ADMIN') {
-        navigate('/admin');
-      } else {
-        navigate('/dashboard');
-      }
+      navigate('/dashboard');
     }
   }, [isAuthenticated, user, navigate]);
 
@@ -31,12 +27,12 @@ const Signup = () => {
     setError('');
     
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError('Passwords do not match');
       return;
     }
     
     if (role === 'ADMIN') {
-      setError("Cannot signup as ADMIN");
+      setError('Cannot signup as ADMIN');
       return;
     }
 
@@ -44,80 +40,135 @@ const Signup = () => {
     const result = await signup(name, email, password, role);
     
     if (result.success) {
-      setSuccessMsg("Registration submitted successfully. Your account is pending administrator approval.");
+      setSuccessMsg('Registration submitted successfully. Your account is pending administrator approval.');
     } else {
       setError(result.error);
     }
     setIsSubmitting(false);
   };
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) {
+    return (
+      <div className="auth-page">
+        <div className="loader-container">
+          <div className="spinner"></div>
+          <p className="loader-message">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (successMsg) {
     return (
-      <div className="auth-container">
-        <h2>Sign Up</h2>
-        <div className="success-message" style={{ color: 'green', padding: '10px', background: '#e6ffe6', border: '1px solid green', borderRadius: '4px', marginBottom: '15px' }}>
-          {successMsg}
+      <div className="auth-page">
+        <div className="auth-card">
+          <div className="auth-brand">
+            <div className="auth-brand-title">CRM Portal</div>
+            <div className="auth-brand-subtitle">AI-Powered CRM</div>
+          </div>
+          <h1 className="auth-heading">Registration Submitted</h1>
+          <div className="auth-success">{successMsg}</div>
+          <div className="auth-footer">
+            <Link to="/login">Go to Login</Link>
+          </div>
         </div>
-        <p><Link to="/login">Go to Login</Link></p>
       </div>
     );
   }
 
   return (
-    <div className="auth-container">
-      <h2>Sign Up</h2>
-      {error && <div className="error-message">{error}</div>}
-      <form onSubmit={handleSubmit} className="auth-form">
-        <div className="form-group">
-          <label>Full Name</label>
-          <input 
-            type="text" 
-            value={name} 
-            onChange={(e) => setName(e.target.value)} 
-            required 
-          />
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="auth-brand">
+          <div className="auth-brand-title">CRM Portal</div>
+          <div className="auth-brand-subtitle">AI-Powered CRM</div>
         </div>
-        <div className="form-group">
-          <label>Email</label>
-          <input 
-            type="email" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
-            required 
-          />
+
+        <h1 className="auth-heading">Create an account</h1>
+        <p className="auth-subheading">Sign up to request access to the CRM workspace.</p>
+
+        {error && <div className="auth-error">{error}</div>}
+
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label htmlFor="signup-name">Full Name</label>
+            <input
+              id="signup-name"
+              type="text"
+              className="form-control"
+              placeholder="Your full name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              autoComplete="name"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="signup-email">Email</label>
+            <input
+              id="signup-email"
+              type="email"
+              className="form-control"
+              placeholder="you@company.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="signup-password">Password</label>
+            <input
+              id="signup-password"
+              type="password"
+              className="form-control"
+              placeholder="Create a password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="new-password"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="signup-confirm">Confirm Password</label>
+            <input
+              id="signup-confirm"
+              type="password"
+              className="form-control"
+              placeholder="Confirm your password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              autoComplete="new-password"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="signup-role">Role</label>
+            <select
+              id="signup-role"
+              className="form-control"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+            >
+              <option value="STAFF">Staff</option>
+              <option value="MANAGER">Manager</option>
+            </select>
+            <div className="form-help">Select the role you're requesting.</div>
+          </div>
+
+          <button type="submit" className="auth-btn" disabled={isSubmitting}>
+            {isSubmitting ? 'Submitting...' : 'Sign up'}
+          </button>
+        </form>
+
+        <div className="auth-footer">
+          Already have an account? <Link to="/login">Sign in</Link>
         </div>
-        <div className="form-group">
-          <label>Password</label>
-          <input 
-            type="password" 
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)} 
-            required 
-          />
-        </div>
-        <div className="form-group">
-          <label>Confirm Password</label>
-          <input 
-            type="password" 
-            value={confirmPassword} 
-            onChange={(e) => setConfirmPassword(e.target.value)} 
-            required 
-          />
-        </div>
-        <div className="form-group">
-          <label>Role</label>
-          <select value={role} onChange={(e) => setRole(e.target.value)}>
-            <option value="STAFF">STAFF</option>
-            <option value="MANAGER">MANAGER</option>
-          </select>
-        </div>
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Signing up...' : 'Sign Up'}
-        </button>
-      </form>
-      <p>Already have an account? <Link to="/login">Login here</Link></p>
+      </div>
     </div>
   );
 };

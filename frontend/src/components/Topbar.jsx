@@ -6,7 +6,6 @@ const Topbar = ({ toggleSidebar }) => {
   const { user, logout } = useContext(AuthContext);
   const location = useLocation();
   
-  // Format page title from pathname
   const getPageTitle = () => {
     const path = location.pathname;
     if (path === '/dashboard') return 'Dashboard';
@@ -17,7 +16,6 @@ const Topbar = ({ toggleSidebar }) => {
     if (path === '/agents') return 'Agents';
     if (path === '/audit-logs') return 'Audit Logs';
     if (path === '/security-alerts') return 'Security Alerts';
-    if (path === '/reports') return 'Reports';
     if (path === '/settings') return 'Settings';
     return 'CRM Portal';
   };
@@ -25,25 +23,22 @@ const Topbar = ({ toggleSidebar }) => {
   return (
     <header className="topbar">
       <div className="topbar-left">
-        <button className="menu-toggle" onClick={toggleSidebar}>
+        <button className="menu-toggle" onClick={toggleSidebar} aria-label="Toggle navigation">
           ☰
         </button>
         <h2 className="page-title">{getPageTitle()}</h2>
       </div>
       
       <div className="topbar-right">
-        <div className="notification-bell">
-          🔔
-        </div>
         {user && (
-          <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
-            <div style={{textAlign: 'right'}}>
-              <div style={{fontWeight: 500, fontSize: '0.9rem'}}>{user.name}</div>
-              <div style={{fontSize: '0.75rem', color: 'var(--text-muted)'}} className={`badge ${user.role === 'ADMIN' ? 'danger' : 'info'}`}>
+          <div className="topbar-user" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div className="topbar-user-name" style={{ fontSize: '14px', fontWeight: 600 }}>{user.name}</div>
+              <span className={`badge ${user.role === 'ADMIN' ? 'danger' : user.role === 'MANAGER' ? 'warning' : 'info'}`} style={{ fontSize: '10px', marginTop: '2px' }}>
                 {user.role}
-              </div>
+              </span>
             </div>
-            <button className="logout-btn" onClick={logout}>Logout</button>
+            <button className="btn btn-secondary btn-sm" onClick={logout}>Logout</button>
           </div>
         )}
       </div>

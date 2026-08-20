@@ -2,6 +2,7 @@ import React, { useContext, useState, useRef, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import AssistantMessage from '../components/assistant/AssistantMessage';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { Bot, Send, User, Sparkles } from 'lucide-react';
 
 const AiAssistant = () => {
   const { user, token } = useContext(AuthContext);
@@ -80,15 +81,15 @@ const AiAssistant = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, loading]);
 
-  const handleSend = async (e) => {
-    e.preventDefault();
-    if (!prompt.trim() || !isSessionActive) return;
+  const handleSend = async (e, customPrompt = null) => {
+    if (e) e.preventDefault();
+    const textToSend = customPrompt || prompt;
+    if (!textToSend.trim() || !isSessionActive) return;
 
-    const userMessage = { sender: 'user', text: prompt, timestamp: new Date() };
+    const userMessage = { sender: 'user', text: textToSend, timestamp: new Date() };
     setMessages(prev => [...prev, userMessage]);
-    const currentPrompt = prompt;
     setPrompt('');
     setLoading(true);
 
@@ -100,10 +101,9 @@ const AiAssistant = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          prompt: currentPrompt
+          prompt: textToSend
         })
       });
-      
       
       let data = {};
       let isJsonError = false;
@@ -148,39 +148,63 @@ const AiAssistant = () => {
     setLoading(false);
   };
 
+  const handleSuggestion = (text) => {
+    handleSend(null, text);
+  };
+
   return (
-    <div style={{display: 'flex', flexDirection: 'column', height: 'calc(100vh - 140px)'}}>
-      {/* Header */}
-      <div className="card-row" style={{marginBottom: '20px', flexShrink: 0}}>
-        <div className="stat-card">
-          <span className="stat-title">Current Agent</span>
-          <span className="stat-value" style={{fontSize: '1.2rem'}}>{user?.agent?.name || 'Unassigned'}</span>
-          <span style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>Agent ID: {user?.agent?.agent_id || '—'}</span>
+    <div style={{display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)', maxWidth: '1000px', margin: '0 auto'}}>
+      
+      {/* Header Info */}
+      <div style={{ padding: '0 0 var(--space-4) 0', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '1px solid var(--border-color)', marginBottom: 'var(--space-4)' }}>
+        <div>
+          <h2 style={{ margin: '0 0 4px 0', fontSize: '20px' }}>AI Assistant</h2>
+          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '13px' }}>Your CRM intelligence workspace</p>
         </div>
-        <div className="stat-card">
-          <span className="stat-title">Portal Session</span>
-          <span className="stat-value" style={{fontSize: '1.2rem', color: sessionLoading ? 'var(--text-muted)' : (isSessionActive ? 'var(--success-color)' : 'var(--danger-color)')}}>
-            {sessionLoading ? '● CHECKING...' : (isSessionActive ? '● ACTIVE' : '● INACTIVE')}
-          </span>
-          <span style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>
-            {sessionLoading ? 'Verifying...' : (isSessionActive ? 'Ready for operations' : 'Agent operations unavailable')}
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', backgroundColor: 'var(--card-bg)', padding: '8px 12px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', boxShadow: 'var(--card-shadow)' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--primary-light)', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Bot size={18} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-color)', lineHeight: 1.2 }}>{user?.agent?.name || 'CRM Assistant'}</span>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{user?.agent?.agent_id || 'Unassigned'}</span>
+          </div>
+          <div style={{ marginLeft: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: sessionLoading ? 'var(--text-light)' : (isSessionActive ? 'var(--success-color)' : 'var(--danger-color)') }}></span>
+            <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+              {sessionLoading ? 'Checking' : (isSessionActive ? 'Active' : 'Inactive')}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Chat Area */}
-      <div className="panel" style={{flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden'}}>
-        <div className="panel-header" style={{flexShrink: 0}}>
-          <h3>AI Assistant Conversation</h3>
-        </div>
+      <div style={{flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', backgroundColor: 'var(--card-bg)', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border-color)', boxShadow: 'var(--card-shadow)'}}>
         
         {/* Messages */}
-        <div style={{flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px'}}>
+        <div style={{flex: 1, overflowY: 'auto', padding: 'var(--space-6)', display: 'flex', flexDirection: 'column', gap: 'var(--space-5)'}}>
           {messages.length === 0 && (
-            <div style={{textAlign: 'center', color: 'var(--text-muted)', marginTop: '40px'}}>
-              <span style={{fontSize: '3rem'}}>💬</span>
-              <h4>How can I help you today?</h4>
-              <p>Try asking me to "Show me Karthikeyan VV" or "List all customers".</p>
+            <div style={{textAlign: 'center', color: 'var(--text-muted)', marginTop: 'var(--space-10)', display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'var(--primary-light)', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 'var(--space-4)' }}>
+                <Sparkles size={24} />
+              </div>
+              <h4 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-color)', marginBottom: 'var(--space-2)' }}>How can I help you today?</h4>
+              <p style={{ fontSize: '13px', marginBottom: 'var(--space-6)', maxWidth: '400px' }}>Ask about customers, staff, agents, permissions, security activity, or CRM data.</p>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-3)', width: '100%', maxWidth: '600px' }}>
+                <button className="btn btn-secondary" style={{ padding: '12px', justifyContent: 'flex-start', textAlign: 'left', fontWeight: 400 }} onClick={() => handleSuggestion('Show me all customers')}>
+                  "Show me all customers"
+                </button>
+                <button className="btn btn-secondary" style={{ padding: '12px', justifyContent: 'flex-start', textAlign: 'left', fontWeight: 400 }} onClick={() => handleSuggestion('Who works at XYXY Company?')}>
+                  "Who works at XYXY Company?"
+                </button>
+                <button className="btn btn-secondary" style={{ padding: '12px', justifyContent: 'flex-start', textAlign: 'left', fontWeight: 400 }} onClick={() => handleSuggestion('Show active staff')}>
+                  "Show active staff"
+                </button>
+                <button className="btn btn-secondary" style={{ padding: '12px', justifyContent: 'flex-start', textAlign: 'left', fontWeight: 400 }} onClick={() => handleSuggestion('List recent customer activity')}>
+                  "List recent customer activity"
+                </button>
+              </div>
             </div>
           )}
           
@@ -191,18 +215,27 @@ const AiAssistant = () => {
               alignItems: msg.sender === 'user' ? 'flex-end' : 'flex-start'
             }}>
               <div style={{
-                maxWidth: '80%',
-                padding: '15px',
-                borderRadius: '8px',
-                backgroundColor: msg.sender === 'user' ? 'var(--primary-color)' : 'var(--bg-color)',
-                color: msg.sender === 'user' ? '#fff' : 'inherit',
-                border: msg.sender === 'agent' ? '1px solid var(--border-color)' : 'none'
+                maxWidth: '85%',
+                padding: '14px 18px',
+                borderRadius: '16px',
+                borderBottomRightRadius: msg.sender === 'user' ? '4px' : '16px',
+                borderBottomLeftRadius: msg.sender === 'agent' ? '4px' : '16px',
+                backgroundColor: msg.sender === 'user' ? 'var(--primary-color)' : '#ffffff',
+                color: msg.sender === 'user' ? '#ffffff' : 'var(--text-color)',
+                border: msg.sender === 'agent' ? '1px solid var(--border-color)' : '1px solid var(--primary-color)',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
               }}>
-                <div style={{fontSize: '0.8rem', opacity: 0.8, marginBottom: '5px'}}>
-                  {msg.sender === 'user' ? user.name : (user?.agent?.name || 'Agent')} • {msg.timestamp.toLocaleTimeString()}
+                <div style={{fontSize: '11px', opacity: msg.sender === 'user' ? 0.8 : 0.5, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px'}}>
+                  {msg.sender === 'user' ? (
+                    <><User size={12} /> You</>
+                  ) : (
+                    <><Bot size={12} /> CRM Assistant</>
+                  )}
+                  <span style={{ margin: '0 4px' }}>•</span>
+                  {msg.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                 </div>
                 {msg.sender === 'user' ? (
-                  <div style={{whiteSpace: 'pre-wrap', lineHeight: '1.5'}}>{msg.text}</div>
+                  <div style={{whiteSpace: 'pre-wrap', lineHeight: '1.5', fontSize: '14px'}}>{msg.text}</div>
                 ) : (
                   <ErrorBoundary>
                     <AssistantMessage msg={msg} user={user} currentSessionId={currentSessionId} />
@@ -211,28 +244,68 @@ const AiAssistant = () => {
               </div>
             </div>
           ))}
+          
+          {loading && (
+            <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+              <div style={{
+                padding: '14px 18px',
+                borderRadius: '16px',
+                borderBottomLeftRadius: '4px',
+                backgroundColor: '#ffffff',
+                border: '1px solid var(--border-color)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                color: 'var(--text-muted)'
+              }}>
+                <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
+                <span style={{ fontSize: '13px' }}>Assistant is thinking...</span>
+              </div>
+            </div>
+          )}
+          
           <div ref={messagesEndRef} />
         </div>
 
         {/* Input Area */}
-        <div style={{padding: '20px', borderTop: '1px solid var(--border-color)', backgroundColor: 'var(--bg-color)', flexShrink: 0}}>
+        <div style={{padding: 'var(--space-4) var(--space-5)', borderTop: '1px solid var(--border-color)', backgroundColor: 'var(--bg-color)', flexShrink: 0}}>
           {!isSessionActive ? (
-            <div style={{textAlign: 'center', color: 'var(--danger-color)', padding: '10px'}}>
+            <div style={{textAlign: 'center', color: 'var(--danger-color)', padding: '10px', fontSize: '13px', fontWeight: 500}}>
               Your Agent session is inactive. Agent operations are unavailable.
             </div>
           ) : (
-            <form onSubmit={handleSend} style={{display: 'flex', gap: '10px'}}>
-              <input
-                type="text"
-                className="form-control"
-                style={{flex: 1}}
-                placeholder="Ask the CRM Agent anything..."
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                disabled={loading}
-              />
-              <button type="submit" className="btn btn-primary" disabled={loading || !prompt.trim()}>
-                {loading ? 'Sending...' : 'Send'}
+            <form onSubmit={handleSend} style={{display: 'flex', gap: '10px', alignItems: 'flex-end'}}>
+              <div style={{ flex: 1, position: 'relative' }}>
+                <textarea
+                  className="form-control"
+                  style={{ 
+                    width: '100%', 
+                    resize: 'none', 
+                    height: '52px',
+                    padding: '15px 16px',
+                    borderRadius: 'var(--radius-lg)',
+                    lineHeight: '1.4'
+                  }}
+                  placeholder="Ask the CRM Agent anything..."
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend(e);
+                    }
+                  }}
+                  disabled={loading}
+                />
+              </div>
+              <button 
+                type="submit" 
+                className="btn btn-primary" 
+                style={{ height: '52px', padding: '0 20px', borderRadius: 'var(--radius-lg)' }}
+                disabled={loading || !prompt.trim()}
+              >
+                {loading ? <span className="spinner" style={{width: '18px', height: '18px', borderWidth: '2px', borderTopColor: 'transparent'}}></span> : <Send size={18} />}
+                <span style={{ marginLeft: '8px' }}>Send</span>
               </button>
             </form>
           )}

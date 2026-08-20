@@ -1,101 +1,111 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import PageLoader from '../components/PageLoader';
+import ErrorState from '../components/ErrorState';
 
 const UserDashboard = () => {
   const { token, user } = useContext(AuthContext);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/v1/admin/my-stats`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setStats(data);
-        }
-      } catch (e) {
-        console.error(e);
+  const fetchStats = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_URL}/api/v1/admin/my-stats`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setStats(data);
+      } else {
+        setError('Failed to load dashboard data.');
       }
+    } catch (e) {
+      console.error(e);
+      setError('A network error occurred.');
+    } finally {
       setLoading(false);
-    };
+    }
+  };
+
+  useEffect(() => {
     fetchStats();
   }, [token]);
 
+  if (loading && !stats) {
+    return <PageLoader message="Loading dashboard..." delay={250} />;
+  }
+
+  if (error && !stats) {
+    return <ErrorState message={error} onRetry={fetchStats} />;
+  }
+
   return (
-    <div>
-      <div style={{marginBottom: '20px'}}>
-        <h2 style={{margin: 0}}>Welcome back, {user?.name}</h2>
-        <p style={{color: 'var(--text-muted)', margin: '5px 0 0 0'}}>Here's an overview of your CRM and Agent activity.</p>
+    <div style={{ position: 'relative', minHeight: '300px' }}>
+      <div style={{ marginBottom: '24px' }}>
+        <h2 style={{ margin: 0 }}>Welcome back, {user?.name}</h2>
+        <p style={{ color: 'var(--text-muted)', margin: '5px 0 0 0', fontSize: '14px' }}>Here's an overview of your CRM and Agent activity.</p>
       </div>
 
-      {loading ? (
-        <p>Loading stats...</p>
-      ) : stats ? (
-        <>
-          <div className="card-row">
-            <div className="stat-card">
-              <span className="stat-title">Total Customers</span>
-              <span className="stat-value">{stats.total_customers}</span>
+      <div className="card-row">
+        <div className="stat-card">
+          <span className="stat-title">Total Customers</span>
+          <span className="stat-value">{stats?.total_customers || 0}</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-title">My Active Sessions</span>
+          <span className="stat-value">{stats?.active_sessions || 0}</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-title">Allowed Operations</span>
+          <span className="stat-value" style={{ color: 'var(--success-color)' }}>{stats?.allowed_operations || 0}</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-title">Blocked Operations</span>
+          <span className="stat-value" style={{ color: 'var(--danger-color)' }}>{stats?.blocked_operations || 0}</span>
+        </div>
+      </div>
+
+      <div className="dashboard-grid">
+        <div className="panel">
+          <div className="panel-header">
+            <h3>My Agent Status</h3>
+          </div>
+          <div style={{ marginBottom: '15px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Agent Name</span>
+              <span style={{ fontWeight: '600', fontSize: '14px' }}>{user?.agent?.name || 'Unassigned'}</span>
             </div>
-            <div className="stat-card">
-              <span className="stat-title">My Active Sessions</span>
-              <span className="stat-value">{stats.active_sessions}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Agent ID</span>
+              <span style={{ fontWeight: '600', fontSize: '14px' }}>{user?.agent?.agent_id || '—'}</span>
             </div>
-            <div className="stat-card">
-              <span className="stat-title">Allowed Operations</span>
-              <span className="stat-value" style={{color: 'var(--success-color)'}}>{stats.allowed_operations}</span>
-            </div>
-            <div className="stat-card">
-              <span className="stat-title">Blocked Operations</span>
-              <span className="stat-value" style={{color: 'var(--danger-color)'}}>{stats.blocked_operations}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Role Scope</span>
+              <span className="badge info">{user?.role}</span>
             </div>
           </div>
+          <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => navigate('/ai-assistant')}>
+            Invoke AI Assistant
+          </button>
+        </div>
 
-          <div style={{display: 'flex', gap: '24px', flexWrap: 'wrap'}}>
-            <div className="panel" style={{flex: '1 1 300px'}}>
-              <div className="panel-header">
-                <h3>My Agent Status</h3>
-              </div>
-              <div style={{marginBottom: '15px'}}>
-                <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '10px'}}>
-                  <span style={{color: 'var(--text-muted)'}}>Agent Name:</span>
-                  <span style={{fontWeight: 'bold'}}>{user?.agent?.name || 'Unassigned'}</span>
-                </div>
-                <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '10px'}}>
-                  <span style={{color: 'var(--text-muted)'}}>Agent ID:</span>
-                  <span style={{fontWeight: 'bold'}}>{user?.agent?.agent_id || '—'}</span>
-                </div>
-                <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '10px'}}>
-                  <span style={{color: 'var(--text-muted)'}}>Role Scope:</span>
-                  <span className="badge info">{user?.role}</span>
-                </div>
-              </div>
-              <div style={{marginTop: '20px'}}>
-                <button className="btn btn-primary" style={{width: '100%'}} onClick={() => navigate('/ai-assistant')}>
-                  Invoke AI Assistant
-                </button>
-              </div>
-            </div>
-
-            <div className="panel" style={{flex: '2 1 400px'}}>
-              <div className="panel-header">
-                <h3>My Recent AI Activity</h3>
-              </div>
-              <div style={{padding: '30px', textAlign: 'center', color: 'var(--text-muted)'}}>
-                <p>Your recent AI activity feed will appear here when the audit engine is enabled.</p>
-              </div>
-            </div>
+        <div className="panel">
+          <div className="panel-header">
+            <h3>My Recent AI Activity</h3>
           </div>
-        </>
-      ) : (
-        <p>Failed to load dashboard data.</p>
-      )}
+          <div className="empty-state">
+            Your recent AI activity feed will appear here when the audit engine is enabled.
+          </div>
+        </div>
+      </div>
+
+      {loading && <PageLoader overlay={true} message="Refreshing..." delay={500} />}
     </div>
   );
 };

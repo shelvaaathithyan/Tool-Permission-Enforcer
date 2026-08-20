@@ -81,19 +81,19 @@ const AdminDashboard = () => {
       </div>
 
       <div className="card-row">
-        <div className="stat-card">
+        <div className="stat-card" style={{ alignItems: 'center', textAlign: 'center' }}>
           <span className="stat-title">Total Customers</span>
           <span className="stat-value">{stats?.total_customers || 0}</span>
         </div>
-        <div className="stat-card">
+        <div className="stat-card" style={{ alignItems: 'center', textAlign: 'center' }}>
           <span className="stat-title">Active Staff/Users</span>
           <span className="stat-value">{stats?.active_users || 0}</span>
         </div>
-        <div className="stat-card">
+        <div className="stat-card" style={{ alignItems: 'center', textAlign: 'center' }}>
           <span className="stat-title">Active Agents</span>
           <span className="stat-value">{stats?.total_agents || 0}</span>
         </div>
-        <div className="stat-card" style={{ borderLeft: stats?.pending_signups > 0 ? '4px solid #ffc107' : '' }}>
+        <div className="stat-card" style={{ alignItems: 'center', textAlign: 'center', borderLeft: stats?.pending_signups > 0 ? '4px solid #ffc107' : '' }}>
           <span className="stat-title">Pending Signups</span>
           <span className="stat-value" style={{ color: stats?.pending_signups > 0 ? '#856404' : 'inherit' }}>
             {stats?.pending_signups || 0}
@@ -106,7 +106,7 @@ const AdminDashboard = () => {
         <div className="panel">
           <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ margin: 0 }}>Recent Customers</h3>
-            <button className="btn btn-sm btn-outline" onClick={() => navigate('/customers')}>View All</button>
+            <button className="btn btn-sm btn-secondary" onClick={() => navigate('/customers')}>View All</button>
           </div>
           
           {recentCustomers.length === 0 ? (
@@ -136,7 +136,7 @@ const AdminDashboard = () => {
         <div className="panel">
           <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ margin: 0 }}>Team Overview</h3>
-            <button className="btn btn-sm btn-outline" onClick={() => navigate('/users')}>Manage Team</button>
+            <button className="btn btn-sm btn-secondary" onClick={() => navigate('/users')}>View Team</button>
           </div>
           
           {teamMembers.length === 0 ? (
