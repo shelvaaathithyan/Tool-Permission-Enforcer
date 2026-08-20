@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import PageLoader from '../components/PageLoader';
+import ErrorState from '../components/ErrorState';
 
 const Customers = () => {
   const { token } = useContext(AuthContext);
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const pageSize = 100;
@@ -18,6 +21,7 @@ const Customers = () => {
 
   const fetchCustomers = async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch(`${API_URL}/api/v1/crm/customers?page=${page}&page_size=${pageSize}`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -26,11 +30,15 @@ const Customers = () => {
         const data = await res.json();
         setCustomers(data.items);
         setTotal(data.total);
+      } else {
+        setError('Failed to fetch customers from server.');
       }
     } catch (e) {
       console.error(e);
+      setError('A network error occurred while fetching customers.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -78,7 +86,6 @@ const Customers = () => {
       });
       
       if (res.ok) {
-        // Refresh
         await fetchCustomers();
         closeEditModal();
         alert("Customer updated successfully");
@@ -95,16 +102,18 @@ const Customers = () => {
 
   return (
     <div>
-      <div className="panel">
+      <div className="panel" style={{ position: 'relative', minHeight: '300px' }}>
         <div className="panel-header">
           <h3>CRM Customers</h3>
           <div>
-            <button className="btn btn-outline" onClick={fetchCustomers}>Refresh</button>
+            <button className="btn btn-outline" onClick={fetchCustomers} disabled={loading}>
+              Refresh
+            </button>
           </div>
         </div>
         
-        {loading ? (
-          <p>Loading customers...</p>
+        {error ? (
+          <ErrorState message={error} onRetry={fetchCustomers} />
         ) : (
           <>
             <div className="table-responsive">
@@ -121,8 +130,8 @@ const Customers = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {customers.length === 0 ? (
-                    <tr><td colSpan="7">No customers found.</td></tr>
+                  {!loading && customers.length === 0 ? (
+                    <tr><td colSpan="7" className="empty-state">No customers found.</td></tr>
                   ) : (
                     customers.map(c => (
                       <tr key={c.id}>
@@ -157,6 +166,8 @@ const Customers = () => {
                 Showing {customers.length} customers
               </span>
             </div>
+            
+            {loading && <PageLoader overlay={true} message="Loading customers..." />}
           </>
         )}
       </div>
@@ -170,7 +181,7 @@ const Customers = () => {
           <div className="panel" style={{width: '500px', maxWidth: '90%', maxHeight: '90vh', overflowY: 'auto'}}>
             <div className="panel-header">
               <h3>Edit Customer: {editingCustomer.customer_id}</h3>
-              <button className="btn btn-sm btn-outline" onClick={closeEditModal}>X</button>
+              <button className="btn btn-sm btn-outline" onClick={closeEditModal} disabled={saving}>X</button>
             </div>
             <form onSubmit={handleSaveCustomer}>
               <div className="form-group">
@@ -229,3 +240,4 @@ const Customers = () => {
 };
 
 export default Customers;
+

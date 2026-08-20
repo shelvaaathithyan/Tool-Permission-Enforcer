@@ -1,129 +1,191 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import PageLoader from '../components/PageLoader';
+import ErrorState from '../components/ErrorState';
 
 const AdminDashboard = () => {
   const { token, user } = useContext(AuthContext);
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  
+  const [data, setData] = useState({
+    stats: null,
+    recentCustomers: [],
+    teamMembers: []
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/v1/admin/dashboard-stats`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setStats(data);
-        }
-      } catch (e) {
-        console.error(e);
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const headers = { 'Authorization': `Bearer ${token}` };
+      
+      // Fetch independent data concurrently
+      const [statsRes, customersRes, usersRes] = await Promise.all([
+        fetch(`${API_URL}/api/v1/admin/dashboard-stats`, { headers }),
+        fetch(`${API_URL}/api/v1/crm/customers?page=1&page_size=5`, { headers }),
+        fetch(`${API_URL}/api/v1/admin/users`, { headers })
+      ]);
+
+      if (!statsRes.ok || !customersRes.ok || !usersRes.ok) {
+        throw new Error('One or more API requests failed.');
       }
+
+      const [statsData, customersData, usersData] = await Promise.all([
+        statsRes.json(),
+        customersRes.json(),
+        usersRes.json()
+      ]);
+
+      // Process team members (filter for staff/managers)
+      const team = usersData
+        .filter(u => u.is_active && (u.role === 'STAFF' || u.role === 'MANAGER' || u.role === 'ADMIN'))
+        .slice(0, 5); // take latest 5 for overview
+
+      setData({
+        stats: statsData,
+        recentCustomers: customersData.items || [],
+        teamMembers: team
+      });
+    } catch (e) {
+      console.error(e);
+      setError('Unable to load dashboard data. Please check your connection.');
+    } finally {
       setLoading(false);
-    };
-    fetchStats();
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
   }, [token]);
 
+  if (loading && !data.stats) {
+    return <PageLoader message="Loading dashboard..." delay={250} />;
+  }
+
+  if (error && !data.stats) {
+    return <ErrorState message={error} onRetry={fetchDashboardData} />;
+  }
+
+  const { stats, recentCustomers, teamMembers } = data;
+
   return (
-    <div>
-      <div style={{marginBottom: '20px'}}>
-        <h2 style={{margin: 0}}>Welcome back, {user?.name}</h2>
-        <p style={{color: 'var(--text-muted)', margin: '5px 0 0 0'}}>Here's what's happening with your CRM agents today.</p>
+    <div style={{ position: 'relative', minHeight: '300px' }}>
+      <div style={{ marginBottom: '24px' }}>
+        <h2 style={{ margin: 0 }}>Good morning, {user?.name || 'System Administrator'}</h2>
+        <p style={{ color: 'var(--text-muted)', margin: '5px 0 0 0' }}>Here's what's happening across your CRM today.</p>
       </div>
 
-      {loading ? (
-        <p>Loading stats...</p>
-      ) : stats ? (
-        <>
-          <div className="card-row">
-            <div className="stat-card">
-              <span className="stat-title">Total Customers</span>
-              <span className="stat-value">{stats.total_customers}</span>
-            </div>
-            <div className="stat-card">
-              <span className="stat-title">Active AI Sessions</span>
-              <span className="stat-value">{stats.active_sessions}</span>
-            </div>
-            <div className="stat-card">
-              <span className="stat-title">Allowed Operations</span>
-              <span className="stat-value" style={{color: 'var(--success-color)'}}>{stats.allowed_operations}</span>
-            </div>
-            <div className="stat-card">
-              <span className="stat-title">Blocked Operations</span>
-              <span className="stat-value" style={{color: 'var(--danger-color)'}}>{stats.blocked_operations}</span>
+      <div className="card-row">
+        <div className="stat-card">
+          <span className="stat-title">Total Customers</span>
+          <span className="stat-value">{stats?.total_customers || 0}</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-title">Active Staff/Users</span>
+          <span className="stat-value">{stats?.active_users || 0}</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-title">Active Agents</span>
+          <span className="stat-value">{stats?.total_agents || 0}</span>
+        </div>
+        <div className="stat-card" style={{ borderLeft: stats?.pending_signups > 0 ? '4px solid #ffc107' : '' }}>
+          <span className="stat-title">Pending Signups</span>
+          <span className="stat-value" style={{ color: stats?.pending_signups > 0 ? '#856404' : 'inherit' }}>
+            {stats?.pending_signups || 0}
+          </span>
+        </div>
+      </div>
+
+      <div className="dashboard-grid">
+        {/* Customer Overview Panel */}
+        <div className="panel">
+          <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0 }}>Recent Customers</h3>
+            <button className="btn btn-sm btn-outline" onClick={() => navigate('/customers')}>View All</button>
+          </div>
+          
+          {recentCustomers.length === 0 ? (
+            <div className="empty-state">No customers found.</div>
+          ) : (
+            <ul className="mini-list">
+              {recentCustomers.map(c => (
+                <li key={c.id} className="mini-list-item">
+                  <div>
+                    <div style={{ fontWeight: '500' }}>{c.first_name} {c.last_name}</div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{c.email}</div>
+                  </div>
+                  <div>
+                    {c.session_status === 'ACTIVE' ? (
+                      <span className="badge success">Active</span>
+                    ) : (
+                      <span className="badge danger">Inactive</span>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Team Overview Panel */}
+        <div className="panel">
+          <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0 }}>Team Overview</h3>
+            <button className="btn btn-sm btn-outline" onClick={() => navigate('/users')}>Manage Team</button>
+          </div>
+          
+          {teamMembers.length === 0 ? (
+            <div className="empty-state">No active team members.</div>
+          ) : (
+            <ul className="mini-list">
+              {teamMembers.map(tm => (
+                <li key={tm.id} className="mini-list-item">
+                  <div>
+                    <div style={{ fontWeight: '500' }}>{tm.name}</div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{tm.role}</div>
+                  </div>
+                  <div>
+                    {tm.agent_id ? (
+                      <span className="badge info">Has Agent</span>
+                    ) : (
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No Agent</span>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+      
+      {/* Pending signups alert block */}
+      {stats?.pending_signups > 0 && (
+        <div className="dashboard-grid">
+          <div className="panel" style={{ backgroundColor: '#fff3cd', borderColor: '#ffeeba' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px' }}>
+              <div>
+                <h4 style={{ margin: '0 0 5px 0', color: '#856404' }}>Action Required</h4>
+                <p style={{ margin: 0, color: '#856404', fontSize: '0.9rem' }}>
+                  There are {stats.pending_signups} new signup requests waiting for your approval.
+                </p>
+              </div>
+              <button className="btn" style={{ backgroundColor: '#ffc107', color: '#000', border: 'none' }} onClick={() => navigate('/signup-requests')}>
+                Review Requests
+              </button>
             </div>
           </div>
-
-          <div style={{display: 'flex', gap: '24px', flexWrap: 'wrap'}}>
-            <div className="panel" style={{flex: '1 1 300px'}}>
-              <div className="panel-header">
-                <h3>Governance Overview</h3>
-              </div>
-              <div style={{marginBottom: '15px'}}>
-                <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '5px'}}>
-                  <span>Total Portal Users</span>
-                  <span style={{fontWeight: 'bold'}}>{stats.total_users}</span>
-                </div>
-                <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '5px'}}>
-                  <span>Active Users</span>
-                  <span style={{fontWeight: 'bold'}}>{stats.active_users}</span>
-                </div>
-                <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '5px'}}>
-                  <span>Active Agents</span>
-                  <span style={{fontWeight: 'bold'}}>{stats.total_agents}</span>
-                </div>
-              </div>
-              
-              {stats.pending_signups > 0 ? (
-                <div style={{backgroundColor: '#fff3cd', padding: '15px', borderRadius: '4px', border: '1px solid #ffeeba'}}>
-                  <h4 style={{margin: '0 0 10px 0', color: '#856404'}}>Pending Action Required</h4>
-                  <p style={{margin: '0 0 15px 0', color: '#856404', fontSize: '0.9rem'}}>
-                    There are {stats.pending_signups} new signup requests waiting for your approval.
-                  </p>
-                  <button className="btn" style={{backgroundColor: '#ffc107', color: '#000'}} onClick={() => navigate('/signup-requests')}>
-                    Review Requests
-                  </button>
-                </div>
-              ) : (
-                <div style={{backgroundColor: '#d4edda', padding: '15px', borderRadius: '4px', border: '1px solid #c3e6cb'}}>
-                  <h4 style={{margin: '0', color: '#155724', fontSize: '0.95rem'}}>All Caught Up</h4>
-                  <p style={{margin: '5px 0 0 0', color: '#155724', fontSize: '0.85rem'}}>No pending signup requests.</p>
-                </div>
-              )}
-            </div>
-
-            <div className="panel" style={{flex: '2 1 400px'}}>
-              <div className="panel-header">
-                <h3>Recent AI Activity</h3>
-              </div>
-              <div style={{padding: '30px', textAlign: 'center', color: 'var(--text-muted)'}}>
-                <span style={{fontSize: '2rem'}}>📋</span>
-                <p>Detailed AI activity feed will appear here when the Permission Proxy audit engine is fully connected.</p>
-              </div>
-            </div>
-            
-            <div className="panel" style={{flex: '1 1 300px'}}>
-              <div className="panel-header">
-                <h3>Security Overview</h3>
-              </div>
-              <div style={{padding: '30px', textAlign: 'center', color: 'var(--text-muted)'}}>
-                <span style={{fontSize: '2rem'}}>🛡️</span>
-                <p>Security alerts and blocked operation metrics will be displayed here in the next phase.</p>
-                <button className="btn btn-outline btn-sm" style={{marginTop: '10px'}} onClick={() => navigate('/security-alerts')}>
-                  View Alerts
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
-      ) : (
-        <p>Failed to load dashboard data.</p>
+        </div>
       )}
+
+      {loading && <PageLoader overlay={true} message="Refreshing dashboard..." delay={500} />}
     </div>
   );
 };
 
 export default AdminDashboard;
+

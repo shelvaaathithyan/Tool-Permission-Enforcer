@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, AuthContext } from './context/AuthContext';
+import { useContext } from 'react';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Login from './pages/Login';
@@ -17,6 +18,14 @@ import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import './index.css';
 
+const DashboardRouter = () => {
+  const { user } = useContext(AuthContext);
+  if (user?.role === 'ADMIN') {
+    return <AdminDashboard />;
+  }
+  return <UserDashboard />;
+};
+
 function App() {
   return (
     <AuthProvider>
@@ -29,21 +38,16 @@ function App() {
           <Route element={<Layout />}>
             {/* Routes for All Authenticated Users */}
             <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER', 'STAFF']} />}>
+              <Route path="/dashboard" element={<DashboardRouter />} />
               <Route path="/customers" element={<Customers />} />
               <Route path="/ai-assistant" element={<AiAssistant />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
 
-            {/* Routes for MANAGER and STAFF */}
-            <Route element={<ProtectedRoute allowedRoles={['MANAGER', 'STAFF']} />}>
-              <Route path="/dashboard" element={<UserDashboard />} />
-            </Route>
-
             {/* Admin Only Routes */}
             <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
               <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard" element={<AdminDashboard />} />
               <Route path="/signup-requests" element={<SignupRequests />} />
               <Route path="/users" element={<Users />} />
               <Route path="/agents" element={<Agents />} />
