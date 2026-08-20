@@ -48,7 +48,9 @@ const UserDashboard = () => {
   return (
     <div style={{ position: 'relative', minHeight: '300px' }}>
       <div style={{ marginBottom: '24px' }}>
-        <h2 style={{ margin: 0 }}>Welcome back, {user?.name}</h2>
+        <h2 style={{ margin: 0 }}>
+          {user?.name ? `Welcome, ${user.name}` : 'Welcome'}
+        </h2>
         <p style={{ color: 'var(--text-muted)', margin: '5px 0 0 0', fontSize: '14px' }}>Here's an overview of your CRM and Agent activity.</p>
       </div>
 

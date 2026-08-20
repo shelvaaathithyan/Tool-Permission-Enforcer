@@ -76,7 +76,9 @@ const AdminDashboard = () => {
   return (
     <div style={{ position: 'relative', minHeight: '300px' }}>
       <div style={{ marginBottom: '24px' }}>
-        <h2 style={{ margin: 0 }}>Good morning, {user?.name || 'System Administrator'}</h2>
+        <h2 style={{ margin: 0 }}>
+          {user?.name ? `Welcome, ${user.name}` : (user?.role === 'ADMIN' ? 'Welcome, System Administrator' : 'Welcome')}
+        </h2>
         <p style={{ color: 'var(--text-muted)', margin: '5px 0 0 0' }}>Here's what's happening across your CRM today.</p>
       </div>
 
