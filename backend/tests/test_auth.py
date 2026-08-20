@@ -87,3 +87,39 @@ def test_get_me(client, admin_token):
 def test_get_me_unauthenticated(client):
     me_resp = client.get("/api/v1/auth/me")
     assert me_resp.status_code == 401
+
+def test_update_me(client, admin_token):
+    # Create approved user
+    signup_resp = client.post("/api/v1/auth/signup", json={
+        "name": "Update Me User",
+        "email": "updateme@test.com",
+        "password": "testpassword",
+        "requested_role": "STAFF"
+    })
+    req_id = signup_resp.json()["id"]
+    client.post(f"/api/v1/admin/signup-requests/{req_id}/approve", headers={"Authorization": f"Bearer {admin_token}"}, json={"role": "STAFF"})
+
+    login_resp = client.post("/api/v1/auth/login", data={
+        "username": "updateme@test.com",
+        "password": "testpassword"
+    })
+    token = login_resp.json()["access_token"]
+    
+    # Valid update
+    update_resp = client.patch("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"}, json={"name": "New Name"})
+    assert update_resp.status_code == 200
+    data = update_resp.json()
+    assert data["name"] == "New Name"
+    assert data["email"] == "updateme@test.com"
+
+    # Empty update should fail
+    fail_resp = client.patch("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"}, json={"name": "   "})
+    assert fail_resp.status_code == 400
+
+    # Ensure get reflects changes
+    me_resp = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert me_resp.json()["name"] == "New Name"
+
+def test_update_me_unauthenticated(client):
+    update_resp = client.patch("/api/v1/auth/me", json={"name": "Hacker"})
+    assert update_resp.status_code == 401

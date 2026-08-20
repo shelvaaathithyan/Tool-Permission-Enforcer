@@ -25,7 +25,6 @@ const Sidebar = ({ isOpen }) => {
       <div className="sidebar-header" style={{ justifyContent: 'center', textAlign: 'center' }}>
         <div>
           <h2 style={{ fontSize: '20px', fontWeight: 700 }}>CRM Portal</h2>
-          <p style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.5)', letterSpacing: '0.8px' }}>AI-Powered CRM</p>
         </div>
       </div>
       

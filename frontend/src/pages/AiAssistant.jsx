@@ -185,9 +185,7 @@ const AiAssistant = () => {
         <div style={{flex: 1, overflowY: 'auto', padding: 'var(--space-6)', display: 'flex', flexDirection: 'column', gap: 'var(--space-5)'}}>
           {messages.length === 0 && (
             <div style={{textAlign: 'center', color: 'var(--text-muted)', marginTop: 'var(--space-10)', display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'var(--primary-light)', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 'var(--space-4)' }}>
-                <Sparkles size={24} />
-              </div>
+
               <h4 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-color)', marginBottom: 'var(--space-2)' }}>How can I help you today?</h4>
               <p style={{ fontSize: '13px', marginBottom: 'var(--space-6)', maxWidth: '400px' }}>Ask about customers, staff, agents, permissions, security activity, or CRM data.</p>
               
@@ -274,15 +272,15 @@ const AiAssistant = () => {
               Your Agent session is inactive. Agent operations are unavailable.
             </div>
           ) : (
-            <form onSubmit={handleSend} style={{display: 'flex', gap: '10px', alignItems: 'flex-end'}}>
+            <form onSubmit={handleSend} style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
               <div style={{ flex: 1, position: 'relative' }}>
                 <textarea
                   className="form-control"
                   style={{ 
                     width: '100%', 
                     resize: 'none', 
-                    height: '52px',
-                    padding: '15px 16px',
+                    height: '48px',
+                    padding: '13px 16px',
                     borderRadius: 'var(--radius-lg)',
                     lineHeight: '1.4'
                   }}
@@ -301,11 +299,11 @@ const AiAssistant = () => {
               <button 
                 type="submit" 
                 className="btn btn-primary" 
-                style={{ height: '52px', padding: '0 20px', borderRadius: 'var(--radius-lg)' }}
+                style={{ flex: '0 0 auto', width: '88px', height: '48px', padding: '0', display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: 'var(--radius-lg)' }}
                 disabled={loading || !prompt.trim()}
               >
                 {loading ? <span className="spinner" style={{width: '18px', height: '18px', borderWidth: '2px', borderTopColor: 'transparent'}}></span> : <Send size={18} />}
-                <span style={{ marginLeft: '8px' }}>Send</span>
+                <span style={{ marginLeft: '6px' }}>Send</span>
               </button>
             </form>
           )}

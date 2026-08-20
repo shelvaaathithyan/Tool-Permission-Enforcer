@@ -76,6 +76,23 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: DBSession = Depe
 def get_me(current_user: models.User = Depends(deps.get_current_user)):
     return current_user
 
+@router.patch("/me", response_model=schemas.UserResponse)
+def update_me(
+    user_update: schemas.UserUpdate, 
+    db: DBSession = Depends(get_db), 
+    current_user: models.User = Depends(deps.get_current_user)
+):
+    name = user_update.name.strip()
+    if not name:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Name cannot be empty")
+    if len(name) > 100:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Name is too long")
+        
+    current_user.name = name
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
 @router.post("/logout")
 def logout(db: DBSession = Depends(get_db), current_user: models.User = Depends(deps.get_current_user)):
     # Deactivate active session

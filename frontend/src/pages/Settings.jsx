@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 
 const Settings = () => {
-  const { user } = useContext(AuthContext);
+  const { user, token, setUser } = useContext(AuthContext);
   const [name, setName] = useState(user?.name || '');
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState(null);
@@ -10,14 +10,39 @@ const Settings = () => {
   if (!user) return null;
 
   const handleSave = async () => {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      setFeedback({ type: 'error', message: 'Name cannot be empty.' });
+      return;
+    }
+
     setSaving(true);
     setFeedback(null);
 
-    // No backend endpoint for updating profile currently exists
-    setTimeout(() => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const res = await fetch(`${API_URL}/api/v1/auth/me`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name: trimmedName })
+      });
+
+      if (res.ok) {
+        const updatedUser = await res.json();
+        setUser(updatedUser);
+        setFeedback({ type: 'success', message: 'Profile updated successfully.' });
+      } else {
+        const data = await res.json();
+        setFeedback({ type: 'error', message: data.detail || 'Unable to update your profile. Please try again.' });
+      }
+    } catch (err) {
+      setFeedback({ type: 'error', message: 'Unable to update your profile. Please check your connection and try again.' });
+    } finally {
       setSaving(false);
-      setFeedback({ type: 'error', message: 'Profile editing is not yet supported by the backend API. Contact your administrator.' });
-    }, 500);
+    }
   };
 
   const hasChanges = name !== (user.name || '');
