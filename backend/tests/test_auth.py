@@ -123,3 +123,11 @@ def test_update_me(client, admin_token):
 def test_update_me_unauthenticated(client):
     update_resp = client.patch("/api/v1/auth/me", json={"name": "Hacker"})
     assert update_resp.status_code == 401
+
+def test_signup_missing_field(client):
+    response = client.post("/api/v1/auth/signup", json={
+        "name": "Missing Email",
+        "password": "testpassword",
+        "requested_role": "STAFF"
+    })
+    assert response.status_code == 422

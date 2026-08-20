@@ -67,14 +67,25 @@ export const AuthProvider = ({ children }) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name, email, password, role }),
+      // Backend expects 'requested_role', not 'role'
+      body: JSON.stringify({ name, email, password, requested_role: role }),
     });
 
     if (response.ok) {
       return { success: true };
     } else {
       const err = await response.json();
-      return { success: false, error: err.detail || 'Signup failed' };
+      
+      let errorMessage = 'Signup failed';
+      if (err && err.detail) {
+        if (Array.isArray(err.detail)) {
+          // Parse FastAPI validation errors
+          errorMessage = err.detail.map(d => `${d.loc ? d.loc.join('.') : 'Field'} ${d.msg}`).join(', ');
+        } else if (typeof err.detail === 'string') {
+          errorMessage = err.detail;
+        }
+      }
+      return { success: false, error: errorMessage };
     }
   };
 
